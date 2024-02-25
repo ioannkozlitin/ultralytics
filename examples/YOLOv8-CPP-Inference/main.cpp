@@ -27,9 +27,9 @@ int main(int argc, char **argv)
     cv::Size frame_size(1280, 1024);
 
     // Note that in this example the classes are hard-coded and 'classes.txt' is a place holder.
-    Inference inf(projectBasePath + "/yolov8s.onnx", frame_size, "classes.txt", runOnGPU);
+    Inference inf(projectBasePath + "/drone8_7.onnx", frame_size, "classes.txt", runOnGPU);
     cv::VideoCapture video_stream;
-    video_stream.open("/home/ivan/video/smoke/f4.mp4", cv::CAP_FFMPEG);
+    video_stream.open("/home/ivan/videos/555/2023_10_23_13_42_38_visual_narrow.avi", cv::CAP_FFMPEG);
 
     //std::vector<std::string> imageNames;
     //imageNames.push_back(projectBasePath + "/ultralytics/assets/bus.jpg");
@@ -43,7 +43,10 @@ int main(int argc, char **argv)
         //cv::Mat frame = cv::imread(imageNames[i]);
 
         // Inference starts here...
+        double t1 = std::chrono::duration<double>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
         std::vector<Detection> output = inf.runInference(frame);
+        double t2 = std::chrono::duration<double>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+        std::cout << "Inference time: " << (t2 - t1) * 1000 << "ms\n";
 
         int detections = output.size();
         //std::cout << "Number of detections:" << detections << std::endl;

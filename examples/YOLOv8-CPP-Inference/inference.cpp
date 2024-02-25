@@ -18,11 +18,18 @@ std::vector<Detection> Inference::runInference(const cv::Mat &input)
         modelInput = formatToSquare(modelInput);
 
     cv::Mat blob;
+    double t0 = std::chrono::duration<double>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
     cv::dnn::blobFromImage(modelInput, blob, 1.0/255.0, modelShape, cv::Scalar(), true, false);
     net.setInput(blob);
+    double t01 = std::chrono::duration<double>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+    std::cout << "[" << (t01-t0) * 1000 << ", ";
 
+    auto names = net.getUnconnectedOutLayersNames();
     std::vector<cv::Mat> outputs;
-    net.forward(outputs, net.getUnconnectedOutLayersNames());
+    double t1 = std::chrono::duration<double>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+    net.forward(outputs, names);
+    double t2 = std::chrono::duration<double>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+    std::cout << (t2-t1) * 1000 << "]";
 
     int rows = outputs[0].size[1];
     int dimensions = outputs[0].size[2];
