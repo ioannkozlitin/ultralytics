@@ -3,6 +3,8 @@
 #include <getopt.h>
 
 #include <opencv2/opencv.hpp>
+#include <opencv2/videoio.hpp>
+#include <opencv2/highgui.hpp>
 
 #include "inference.h"
 
@@ -11,7 +13,7 @@ using namespace cv;
 
 int main(int argc, char **argv)
 {
-    std::string projectBasePath = "/home/user/ultralytics"; // Set your ultralytics base path
+    std::string projectBasePath = "/home/ivan/proj/ultralytics"; // Set your ultralytics base path
 
     bool runOnGPU = true;
 
@@ -22,23 +24,29 @@ int main(int argc, char **argv)
     //
     // To run Inference with yolov8/yolov5 (ONNX)
     //
+    cv::Size frame_size(1280, 1024);
 
     // Note that in this example the classes are hard-coded and 'classes.txt' is a place holder.
-    Inference inf(projectBasePath + "/yolov8s.onnx", cv::Size(640, 480), "classes.txt", runOnGPU);
+    Inference inf(projectBasePath + "/yolov8s.onnx", frame_size, "classes.txt", runOnGPU);
+    cv::VideoCapture video_stream;
+    video_stream.open("/home/ivan/video/smoke/f4.mp4", cv::CAP_FFMPEG);
 
-    std::vector<std::string> imageNames;
-    imageNames.push_back(projectBasePath + "/ultralytics/assets/bus.jpg");
-    imageNames.push_back(projectBasePath + "/ultralytics/assets/zidane.jpg");
+    //std::vector<std::string> imageNames;
+    //imageNames.push_back(projectBasePath + "/ultralytics/assets/bus.jpg");
+    //imageNames.push_back(projectBasePath + "/ultralytics/assets/zidane.jpg");
 
-    for (int i = 0; i < imageNames.size(); ++i)
+    cv::Mat frame;
+    //for (int i = 0; i < imageNames.size(); ++i)
+    while (video_stream.read(frame))
     {
-        cv::Mat frame = cv::imread(imageNames[i]);
+        cv::resize(frame, frame, frame_size);
+        //cv::Mat frame = cv::imread(imageNames[i]);
 
         // Inference starts here...
         std::vector<Detection> output = inf.runInference(frame);
 
         int detections = output.size();
-        std::cout << "Number of detections:" << detections << std::endl;
+        //std::cout << "Number of detections:" << detections << std::endl;
 
         for (int i = 0; i < detections; ++i)
         {
@@ -61,10 +69,10 @@ int main(int argc, char **argv)
         // Inference ends here...
 
         // This is only for preview purposes
-        float scale = 0.8;
-        cv::resize(frame, frame, cv::Size(frame.cols*scale, frame.rows*scale));
+        //float scale = 0.8;
+        //cv::resize(frame, frame, cv::Size(frame.cols*scale, frame.rows*scale));
         cv::imshow("Inference", frame);
-
-        cv::waitKey(-1);
+        if(cv::waitKey(1) == 27)
+            break;
     }
 }
