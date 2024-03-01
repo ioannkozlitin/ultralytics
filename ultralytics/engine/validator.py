@@ -149,7 +149,8 @@ class BaseValidator:
             if not pt:
                 self.args.rect = False
             self.stride = model.stride  # used in get_dataloader() for padding
-            self.dataloader = self.dataloader or self.get_dataloader(self.data.get(self.args.split), self.args.batch)
+            label_folders = self.data["label_folders"] if "label_folders" in self.data else ["labels"]
+            self.dataloader = self.dataloader or self.get_dataloader(self.data.get(self.args.split), self.args.batch, label_folders=label_folders)
 
             model.eval()
             model.warmup(imgsz=(1 if pt else self.args.batch, 3, imgsz, imgsz))  # warmup

@@ -24,12 +24,12 @@ int main(int argc, char **argv)
     //
     // To run Inference with yolov8/yolov5 (ONNX)
     //
-    cv::Size frame_size(1280, 1024);
+    cv::Size frame_size(640, 480);
 
     // Note that in this example the classes are hard-coded and 'classes.txt' is a place holder.
-    Inference inf(projectBasePath + "/drone8_7.onnx", frame_size, "classes.txt", runOnGPU);
+    Inference inf(projectBasePath + "/yolov8_0.523.onnx", frame_size, "classes.txt", runOnGPU);
     cv::VideoCapture video_stream;
-    video_stream.open("/home/ivan/videos/555/2023_10_23_13_42_38_visual_narrow.avi", cv::CAP_FFMPEG);
+    video_stream.open("/home/ivan/videos/555/2.mp4", cv::CAP_FFMPEG);
 
     //std::vector<std::string> imageNames;
     //imageNames.push_back(projectBasePath + "/ultralytics/assets/bus.jpg");

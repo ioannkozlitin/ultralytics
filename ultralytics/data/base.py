@@ -61,6 +61,7 @@ class BaseDataset(Dataset):
         single_cls=False,
         classes=None,
         fraction=1.0,
+        label_folders=None
     ):
         """Initialize BaseDataset with given configuration and options."""
         super().__init__()
