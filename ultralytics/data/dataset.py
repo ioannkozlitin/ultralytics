@@ -9,6 +9,7 @@ import numpy as np
 import torch
 import torchvision
 from PIL import Image
+import os
 
 from ultralytics.utils import LOCAL_RANK, NUM_THREADS, TQDM, colorstr, is_dir_writeable
 from ultralytics.utils.ops import resample_segments
@@ -111,8 +112,30 @@ class YOLODataset(BaseDataset):
 
     def get_labels(self):
         """Returns dictionary of labels for YOLO training."""
-        print(f'****** label_folders={self.label_folders}')
-        self.label_files = img2label_paths(self.im_files)
+        #self.label_files = img2label_paths(self.im_files)
+
+        label_folder_parent_set = set()
+        for ff in self.im_files:
+            label_folder_parent_set.add(str(ff).rsplit(f'{os.sep}images{os.sep}', 1)[0])
+            
+        replace_dirs = []
+        for label_folder_parent in label_folder_parent_set:
+            for label_folder in self.label_folders:
+                label_folder_path = label_folder_parent + "/" + label_folder
+                if Path(label_folder_path).is_dir():
+                    replace_dirs.append((label_folder_parent + "/images", label_folder_path))
+                    break
+                    
+        for dir_pair in replace_dirs:
+            print(dir_pair)
+
+        self.label_files = []
+        for ff in self.im_files:
+            for image_dir,label_dir in replace_dirs:
+                if ff.find(image_dir) >= 0:
+                    self.label_files.append(str(Path(ff.replace(image_dir, label_dir)).with_suffix('.txt')))
+                    break
+
         cache_path = Path(self.label_files[0]).parent.with_suffix(".cache")
         try:
             cache, exists = load_dataset_cache_file(cache_path), True  # attempt to load a *.cache file
