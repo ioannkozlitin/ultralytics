@@ -123,7 +123,7 @@ class BaseTrainer:
         # Device
         if self.device.type in ("cpu", "mps"):
             self.args.workers = 0  # faster CPU training as time dominated by inference, not dataloading
-
+        
         # Model and Dataset
         self.model = check_model_file_from_stem(self.args.model)  # add suffix, i.e. yolov8n -> yolov8n.pt
         try:
