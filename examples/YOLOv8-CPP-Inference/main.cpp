@@ -13,7 +13,7 @@ using namespace cv;
 
 int main(int argc, char **argv)
 {
-    std::string projectBasePath = "/home/ivan/proj/ultralytics"; // Set your ultralytics base path
+    std::string projectBasePath = "/home/nkozlitin/proj/ultralytics"; // Set your ultralytics base path
 
     bool runOnGPU = true;
 
@@ -29,7 +29,7 @@ int main(int argc, char **argv)
     // Note that in this example the classes are hard-coded and 'classes.txt' is a place holder.
     Inference inf(projectBasePath + "/yolov8_0.523.onnx", frame_size, "classes.txt", runOnGPU);
     cv::VideoCapture video_stream;
-    video_stream.open("/home/ivan/videos/555/2.mp4", cv::CAP_FFMPEG);
+    video_stream.open("/home/nkozlitin/Videos/555/2023_10_23_13_42_38_visual_narrow.avi", cv::CAP_FFMPEG);
 
     //std::vector<std::string> imageNames;
     //imageNames.push_back(projectBasePath + "/ultralytics/assets/bus.jpg");
