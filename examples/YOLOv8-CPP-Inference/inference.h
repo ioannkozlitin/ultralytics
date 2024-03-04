@@ -43,7 +43,7 @@ private:
     cv::Size2f modelShape{};
 
     float modelConfidenceThreshold {0.3};
-    float modelScoreThreshold      {0.1};
+    float modelScoreThreshold      {0.003};
     float modelNMSThreshold        {0.50};
 
     bool letterBoxForSquare = true;
