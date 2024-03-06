@@ -1,5 +1,5 @@
 from pathlib import Path
-from ultralytics.data import Annotator, colors
+from ultralytics.utils.plotting import Annotator, colors
 from ultralytics.utils.ops import xywhn2xyxy
 import numpy as np
 import os
