@@ -11,12 +11,12 @@ def img2label_paths(img_paths, label_folder):
     return [sb.join(x.rsplit(sa, 1)).rsplit('.', 1)[0] + '.txt' for x in img_paths]
 
 if __name__ == '__main__':
-    root_path = Path("/home/orwell/proj/ssd0/ikozlitin/ADE20K_2021_17_01")
-    with open(root_path / "validation.txt","rt") as f:
+    root_path = Path("xxx")
+    with open(root_path / "all.txt","rt") as f:
         lines = f.readlines()
     
     paths = [str(root_path.joinpath(Path(line[:-1]))) for line in lines]
-    txts = img2label_paths(paths, "luggage_24") 
+    txts = img2label_paths(paths, "labels") 
 
     for path_,txt_ in zip(paths, txts):
         image = cv2.imread(str(path_))
@@ -26,8 +26,8 @@ if __name__ == '__main__':
             lb = [x.split() for x in f.read().strip().splitlines() if len(x)]
             lb = np.array(lb, dtype=np.float32)
             xyxy = xywhn2xyxy(lb[:, 1:5], w=image.shape[1], h=image.shape[0])
-            for xyxy_item in xyxy:
-                annotator.box_label(xyxy_item, "object", color=colors(lb[0][0], True))
+            for cls, xyxy_item in zip(lb[:,0],xyxy):
+                annotator.box_label(xyxy_item, f"{int(cls)}", color=colors(cls, True))
 
         cv2.imshow("image",image)
         print(image.shape)
