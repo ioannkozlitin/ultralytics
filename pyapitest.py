@@ -6,7 +6,7 @@ from shutil import rmtree
 model = YOLO("luggage8_16.pt")
 #results = model.predict(source="/home/ivan/videos/555/1.mp4", save_txt=True, stream=True, save_frames=True, save=True, show_boxes=False)
 #results = model.predict(source="/home/nkozlitin/video/aaa.mp4", save_txt=False, stream=True, save_frames=False, save=False, show_boxes=False, conf=0.5)
-results = model.predict(source="/home/nkozlitin/cvdatastore/VideoArchive/MainData/LeftObjects/certification/AO_LO_4_SIDE.avi", save_txt=False, stream=True, save_frames=False, save=False, show_boxes=False, conf=0.5)
+results = model.predict(source="/home/nkozlitin/cvdatastore/VideoArchive/MainData/LeftObjects/certification/AO_LO_4_SIDE.avi", save_txt=False, stream=True, save_frames=False, save=False, show_boxes=False, conf=0.25)
 
 images_path = Path("xxx/images")
 labels_path = Path("xxx/labels")
