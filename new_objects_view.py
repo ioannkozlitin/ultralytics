@@ -18,11 +18,13 @@ if __name__ == '__main__':
         lines = f.readlines()
     
     paths = [str(root_path.joinpath(Path(line[:-1]))) for line in lines]
-    txts = img2label_paths(paths, "labels") 
-
+    txts = img2label_paths(paths, "labels")
+    
+    stack_size = 150
     lb_stack=[]
-    lb_stack_size = 150
     image_stack=[]
+    path_stack=[]
+    ff = open(root_path / "spec_labels.txt","wt")
     for path_,txt_ in zip(paths, txts):
         image = cv2.imread(str(path_))
 
@@ -39,24 +41,34 @@ if __name__ == '__main__':
         #
         lb_stack.append(lb)
         image_stack.append(image.copy())
-        if(len(lb_stack) > lb_stack_size):
+        path_stack.append(str(path_))
+        if(len(lb_stack) > stack_size):
             lb_stack.pop(0)
             image_stack.pop(0)
-        #
+            path_stack.pop(0)
+        # 
                     
+        xywh_top = lb[:, 1:5]
         xyxy_top = torch.tensor(xywhn2xyxy(lb[:, 1:5], w=image.shape[1], h=image.shape[0]))
         xyxy_bottom = torch.tensor(xywhn2xyxy(lb_stack[0][:, 1:5], w=image.shape[1], h=image.shape[0]))
         iou_matrix = box_iou(xyxy_top, xyxy_bottom)
         max_ious, _ = torch.max(iou_matrix,axis=1)
+        bottom_image_name = Path(path_stack[0]).stem
+        top_image_name = Path(path_stack[-1]).stem
         #print(max_ious)
                 
         image_bottom = image_stack[0]
         diff_image  = ((image.astype(np.float32) - image_bottom.astype(np.float32)) / 2 + 128).astype(np.uint8)
         annotator = Annotator(diff_image, line_width=3)
-        for cls, xyxy_item, max_iou in zip(lb[:,0],xyxy_top, max_ious):
+        for cls, xyxy_item, max_iou, xywh_item in zip(lb[:,0],xyxy_top, max_ious, xywh_top):
             if xyxy_item[0] <= image.shape[1]:
                 iou_condition = int(max_iou > 0.3)
                 annotator.box_label(xyxy_item, f"{int(cls)}", color=colors(iou_condition * 3, True))
+                line = f'{bottom_image_name} {top_image_name} '
+                for value in xywh_item:
+                    line += str(value)+' '
+                line += f'{iou_condition} {int(cls)}\n'
+                ff.write(line)
 
         cv2.imshow("image",diff_image)
         #print(image.shape)
@@ -67,5 +79,7 @@ if __name__ == '__main__':
 
         if cv2.waitKey(1)==27:
             break
+    
+    ff.close()
 
 
