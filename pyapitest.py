@@ -6,7 +6,13 @@ from shutil import rmtree
 model = YOLO("luggage8_16.pt")
 #results = model.predict(source="/home/ivan/videos/555/1.mp4", save_txt=True, stream=True, save_frames=True, save=True, show_boxes=False)
 #results = model.predict(source="/home/nkozlitin/video/aaa.mp4", save_txt=False, stream=True, save_frames=False, save=False, show_boxes=False, conf=0.5)
-results = model.predict(source="/home/ivan/videos/VID_20230502_192209.mp4", save_txt=False, stream=True, save_frames=False, save=False, show_boxes=False, conf=0.25)
+#results = model.predict(source="/home/nkozlitin/cvdatastore/VideoArchive/MainData/LeftObjects/certification/AO_LO_4_SIDE.avi", save_txt=False, stream=True, save_frames=False, save=False, show_boxes=False, conf=0.25)
+results = model.track(source="/home/nkozlitin/cvdatastore/VideoArchive/MainData/LeftObjects/certification/AO_LO_4_SIDE.avi", stream=True, show=True, persist=True)
+
+#for index,result in enumerate(results):
+#    print(result)
+#
+#exit
 
 images_path = Path("xxx/images")
 labels_path = Path("xxx/labels")
@@ -23,5 +29,4 @@ with open("xxx/all.txt","w") as f:
         im = Image.fromarray(result.orig_img[:,:,::-1], mode="RGB")
         im.save(f'xxx/images/{index}.jpg')
         f.write(f'./images/{index}.jpg\n')
-
 

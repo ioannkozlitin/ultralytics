@@ -62,7 +62,7 @@ if __name__ == '__main__':
         annotator = Annotator(diff_image, line_width=3)
         for cls, xyxy_item, max_iou, xywh_item in zip(lb[:,0],xyxy_top, max_ious, xywh_top):
             if xyxy_item[0] <= image.shape[1]:
-                iou_condition = int(max_iou > 0.3)
+                iou_condition = int(max_iou > 0.8)
                 annotator.box_label(xyxy_item, f"{int(cls)}", color=colors(iou_condition * 3, True))
                 line = f'{bottom_image_name} {top_image_name} '
                 for value in xywh_item:
