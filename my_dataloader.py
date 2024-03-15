@@ -44,8 +44,10 @@ if __name__ == "__main__":
     for spec_label in spec_labels:
         i_bottom = root_path / "images" / Path(str(int(spec_label[0]))+".jpg")
         i_top = root_path / "images" / Path(str(int(spec_label[1]))+".jpg")
-
         top_image = cv2.imread(str(i_top))
+        labels = xywhn2xyxy(spec_label[2:6], w=top_image.shape[1], h=top_image.shape[0])
+        print(labels)
+
         cv2.imshow("image",top_image)
         if cv2.waitKey(1)==27:
             break
