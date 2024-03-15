@@ -40,17 +40,29 @@ if __name__ == "__main__":
     with open(root_path / "spec_labels.txt","rt") as f:
         spec_labels = [[float(x_item) for x_item in x.split()] for x in f.read().strip().splitlines() if len(x)]
     
+    stop_flag = 0
     spec_labels = numpy.array(spec_labels)
     for spec_label in spec_labels:
         i_bottom = root_path / "images" / Path(str(int(spec_label[0]))+".jpg")
         i_top = root_path / "images" / Path(str(int(spec_label[1]))+".jpg")
         top_image = cv2.imread(str(i_top))
-        labels = xywhn2xyxy(spec_label[2:6], w=top_image.shape[1], h=top_image.shape[0])
-        print(labels)
+        bottom_image = cv2.imread(str(i_bottom))
+        labels = [int(x) for x in xywhn2xyxy(spec_label[2:6], w=top_image.shape[1], h=top_image.shape[0])]
+        #print(labels)
 
-        cv2.imshow("image",top_image)
-        if cv2.waitKey(1)==27:
+        new_size = (128,128)
+        top_image_resized = cv2.resize(top_image[labels[1]:labels[3],labels[0]:labels[2]], new_size)
+        bottom_image_resized = cv2.resize(bottom_image[labels[1]:labels[3],labels[0]:labels[2]], new_size)
+
+        top_bottom = cv2.hconcat([top_image_resized,bottom_image_resized])
+
+        cv2.imshow("top_bottom", top_bottom)
+
+        key = cv2.waitKey(1-stop_flag)
+        if key == 27:
             break
+        elif key == 32:
+            stop_flag = 1 - stop_flag
 
         #rect = xywhn2xyxy()
         #print(f'{i_top}, {i_bottom}')
