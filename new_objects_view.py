@@ -70,13 +70,9 @@ if __name__ == '__main__':
                 line += f'{iou_condition} {int(cls)}\n'
                 ff.write(line)
 
-        cv2.imshow("image",diff_image)
-        #print(image.shape)
-        #print(f'labels_top: {xyxy_top}')
-        #print(f'lables_bottom: {xyxy_bottom}')
-        #print(f'image path: {path_}')
-        #print(f'image annotation: {txt_}')
+        print(f'{top_image_name}')
 
+        cv2.imshow("image",diff_image)
         if cv2.waitKey(1)==27:
             break
     
