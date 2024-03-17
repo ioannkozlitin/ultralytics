@@ -115,8 +115,8 @@ class YOLODataset(BaseDataset):
         #self.label_files = img2label_paths(self.im_files)
 
         label_folder_parent_set = set()
-        for ff in self.im_files:
-            label_folder_parent_set.add(str(ff).rsplit(f'{os.sep}images{os.sep}', 1)[0])
+        for im_file in self.im_files:
+            label_folder_parent_set.add(str(im_file).rsplit(f'{os.sep}images{os.sep}', 1)[0])
             
         replace_dirs = []
         for label_folder_parent in label_folder_parent_set:
@@ -130,10 +130,10 @@ class YOLODataset(BaseDataset):
             print(dir_pair)
 
         self.label_files = []
-        for ff in self.im_files:
+        for im_file in self.im_files:
             for image_dir,label_dir in replace_dirs:
-                if ff.find(image_dir) >= 0:
-                    self.label_files.append(str(Path(ff.replace(image_dir, label_dir)).with_suffix('.txt')))
+                if im_file.find(image_dir) >= 0:
+                    self.label_files.append(str(Path(im_file.replace(image_dir, label_dir)).with_suffix('.txt')))
                     break
 
         cache_path = Path(self.label_files[0]).parent.with_suffix(".cache")
