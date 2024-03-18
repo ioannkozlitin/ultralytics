@@ -41,7 +41,7 @@ class MyDataset(torch.utils.data.Dataset):
         labels = [int(x) for x in xywhn2xyxy(spec_label[2:6], w=top_image.shape[1], h=top_image.shape[0])]
         top_image_resized = cv2.resize(top_image[labels[1]:labels[3],labels[0]:labels[2]], self.new_size)
         bottom_image_resized = cv2.resize(bottom_image[labels[1]:labels[3],labels[0]:labels[2]], self.new_size)        
-        return [top_image_resized, bottom_image_resized]
+        return T.ToTensor()(numpy.concatenate([top_image_resized, bottom_image_resized],axis=2)), spec_label[6]
 
     def __len__(self):
         return len(self.spec_labels)
@@ -54,11 +54,18 @@ if __name__ == "__main__":
     stop_flag = 1
 
     with torch.no_grad():
-        for batch, item in enumerate(val_loader):
-            print(item[0].numpy().shape)
-            top_bottom = cv2.hconcat([item[0].numpy()[0], item[1].numpy()[0]])
-            cv2.imshow("top_bottom", top_bottom)
+        for batch, (X,y) in enumerate(val_loader):
+            print(X[0].numpy().shape)
+            images = []
+            for channel in X[0].numpy():
+                to_show = (channel*255).astype(numpy.uint8)
+                images.append(to_show)
+
+            image_rows = []
+            for i in range(0, len(images) // 3):
+                image_rows.append(cv2.hconcat(images[3*i:3*i+3]))
             
+            cv2.imshow('channels', cv2.vconcat(image_rows))
             key = cv2.waitKey(1-stop_flag)
             if key == 27:
                 break
