@@ -37,11 +37,11 @@ class MyDataset(torch.utils.data.Dataset):
         return len(self.spec_labels)
 
 if __name__ == "__main__":
-    root_path = Path("xxx")
+    root_path = Path("/home/ivan/mnt/Video/xxx")
 
     transforms = T.Compose([
         T.RandomRotation(degrees=(-15, 15)),
-        T.RandomResizedCrop((128, 128), antialias=True),
+        T.RandomResizedCrop((128, 128)),
         T.GaussianBlur(9)]
     )
 
