@@ -17,6 +17,8 @@ import os
 from my_dataloader import MyDataset
 from functools import partial
 
+import torchvision.transforms as T
+
 class SmokeCnnModel(torch.nn.Module):
     def __init__(self, frame_number):
         super().__init__()
@@ -119,25 +121,31 @@ class SmokeCnn(pl.LightningModule):
 
 def train_core(train_settings):
     print(pl.__version__)
-    nn_train_settings = train_settings['train_settings']
+    nn_train_settings = train_settings
     print(nn_train_settings)
 
-    module = SmokeCnn(nn_train_settings['save_data_path'],
-                      nn_train_settings['validation_save_data_path'],
+    transforms = T.Compose([
+        T.RandomRotation(degrees=(-15, 15)),
+        T.RandomResizedCrop((128, 128)),
+        T.GaussianBlur(9)]
+    )
+
+    module = SmokeCnn(train_labels_filename=nn_train_settings['train_labels_filename'],
+                      validation_labels_filename=nn_train_settings['validation_labels_filename'],
                       batch_size=nn_train_settings['batch_size'],
                       workers=nn_train_settings['workers'],
                       balance=nn_train_settings['balance'],
-                      frame_number=nn_train_settings['frame_number'])
+                      frame_number=nn_train_settings['frame_number'],
+                      new_size=(128,128),
+                      transform=transforms)
 
-    path_profiles = os.path.expanduser(train_settings['path_profiles'])
-    model_project_dir = PurePosixPath(path_profiles).parent.parent / 'Models' / 'Smoke'
+    model_dir = os.path.expanduser(train_settings['model_dir'])
     model_filename = nn_train_settings['nn_model_name']
-    model_name = str(model_project_dir / (nn_train_settings['nn_model_name']))
     early_stopping_patience = nn_train_settings['early_stopping_patience']
 
 
     model_checkpoint = pl.callbacks.ModelCheckpoint(monitor='val_loss', mode='min', save_top_k=1, verbose=True,
-                                         dirpath=model_project_dir, filename=model_filename)
+                                         dirpath=model_dir, filename=model_filename)
 
 
     trainer = pl.Trainer(
@@ -196,7 +204,7 @@ def train_core(train_settings):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 2:
+    if len(sys.argv) > 1:
         with open(sys.argv[1]) as train_settings_file:
             train_core(json.load(train_settings_file))
     else:

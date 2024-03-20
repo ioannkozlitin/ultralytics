@@ -1,70 +1,12 @@
 {
-    "path_launcher" : "~/proj/image-processor/RelWithDebInfo/Tests/launcher_processor",
-    "path_profiles" : "~/proj/image-processor/Profiles/smoke_detector.json",
-    "video_archive" : "~/cvdatastore/VideoArchive",
-    "train_scenario" : "~/cvdatastore/TestSystem/RootDir/Settings/Scenarios/personal/kozlitin/fire_new.yml",
-    "validation_scenario" : "~/cvdatastore/TestSystem/RootDir/Settings/Scenarios/Full_tests/fire_detector_full.yml",
-    "first_stage_model_filename": "fire1.model",
-    "second_stage_model_filename": "s_fire1.model",
-    "xgboost_stage_1": false,
-    "xgboost_stage_2": true,
-    "nn_stage": false,
-    "collect_xgboost_data": true,
-    "collect_nn_data": true,
-    "ideal_folder": "fire",
-    "xgboost_train_params":
-    {
-    	"booster": "gbtree",
-    	"objective": "binary:logistic",
-    	"max_depth": 3,
-    	"eta": 1,
-    	"gamma": 1.0,
-        "min_child_weight": 1,
-        "nthread": 32,
-        "eval_metric": "error"
-    },
-    "stop_train_params":
-    {
-    	"max_train_rounds": 10000,
-    	"early_stopping_rounds": 50
-    },
-    "train_data_split_params":
-    {
-    	"k": 2,
-    	"nfold": 5,
-    	"random_seed": 10,
-    	"separate_validation_list": true
-    },
-    "train_settings":
-    {
-        "save_data_path" : "/home/orwell/proj/TrainDataN128",
-        "validation_save_data_path" : "/home/orwell/proj/ValidationDataN128",
-        "base_prefix" : "MainData",
-        "field_ratio" : 1.4,
-        "show_debug_rects" : false,
-        "smoke_nn": false,
-        "smoke_dataset_type": "secondary",
-        "smoke_nn_save_history_size": 100,
-        "nn_model_name": "fire1",
+	"train_labels_filename" : "/home/nkozlitin/proj/ultralytics/xxx/spec_labels.txt",
+        "validation_labels_filename" : "/home/nkozlitin/proj/ultralytics/xxx/spec_labels.txt",
+        "nn_model_name": "left1",
+        "model_dir": "/home/nkozlitin/proj/ultralytics/leftmodels",
         "early_stopping_patience": 30,
         "batch_size": 128, 
         "workers": 16, 
         "balance": 0.95,
-        "frame_number": 1,
-        "frame_step": 30,
-        "background_enable": false
-    },
-    "profile_path":
-    {
-       "SmokeDetector":
-       {
-          "BlockSmokeNN":
-    	  {
-             "nn_image_size":
-             {
-                "value": "128"
-             }
-          }
-       }
-    }
+        "frame_number": 2
 }
+
