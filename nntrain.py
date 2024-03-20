@@ -25,7 +25,7 @@ class SmokeCnnModel(torch.nn.Module):
         self.net = tv.models.mobilenet_v3_small(pretrained=False, num_classes=2)
         print(f'before: {self.net.features._modules["0"]}')
 
-        self.net.features._modules['0'] = tv.ops.misc.ConvNormActivation(3*frame_number, 16,
+        self.net.features._modules['0'] = tv.ops.misc.Conv2dNormActivation(3*frame_number, 16,
                             kernel_size=3,
                             stride=2,
                             norm_layer=partial(torch.nn.BatchNorm2d, eps=0.001, momentum=0.01),

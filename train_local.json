@@ -1,6 +1,6 @@
 {
-	"train_labels_filename" : "/home/nkozlitin/proj/ultralytics/xxx/spec_labels.txt",
-        "validation_labels_filename" : "/home/nkozlitin/proj/ultralytics/xxx/spec_labels.txt",
+	"train_labels_filename" : "/home/nkozlitin/proj/ultralytics/xxx/spec_labels.txt.train",
+        "validation_labels_filename" : "/home/nkozlitin/proj/ultralytics/xxx/spec_labels.txt.test",
         "nn_model_name": "left1",
         "model_dir": "/home/nkozlitin/proj/ultralytics/leftmodels",
         "early_stopping_patience": 30,
