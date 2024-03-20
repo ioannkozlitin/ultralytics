@@ -5,7 +5,7 @@
         "model_dir": "/home/nkozlitin/proj/ultralytics/leftmodels",
         "early_stopping_patience": 30,
         "batch_size": 128, 
-        "workers": 16, 
+        "workers": 8, 
         "balance": 0.95,
         "frame_number": 2
 }

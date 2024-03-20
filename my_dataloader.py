@@ -31,7 +31,7 @@ class MyDataset(torch.utils.data.Dataset):
         top_image_resized = cv2.resize(top_image[labels[1]:labels[3],labels[0]:labels[2]], self.new_size)
         bottom_image_resized = cv2.resize(bottom_image[labels[1]:labels[3],labels[0]:labels[2]], self.new_size)
         image_cake_tensor = T.ToTensor()(numpy.concatenate([top_image_resized, bottom_image_resized],axis=2))
-        return self.transform(image_cake_tensor) if self.transform else image_cake_tensor, spec_label[6]
+        return self.transform(image_cake_tensor) if self.transform else image_cake_tensor, int(spec_label[6])
 
     def __len__(self):
         return len(self.spec_labels)

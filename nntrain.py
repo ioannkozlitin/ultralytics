@@ -126,7 +126,7 @@ def train_core(train_settings):
 
     transforms = T.Compose([
         T.RandomRotation(degrees=(-15, 15)),
-        T.RandomResizedCrop((128, 128)),
+        T.RandomResizedCrop((128, 128), antialias=True),
         T.GaussianBlur(9)]
     )
 
