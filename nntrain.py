@@ -7,7 +7,7 @@ from pathlib import Path
 from pathlib import PurePosixPath
 import pytorch_lightning as pl
 import onnx
-#from onnx_tf.backend import prepare
+from onnx_tf.backend import prepare
 import tensorflow as tf
 import shutil
 import sys
