@@ -7,7 +7,7 @@ from pathlib import Path
 from pathlib import PurePosixPath
 import pytorch_lightning as pl
 import onnx
-from onnx_tf.backend import prepare
+#from onnx_tf.backend import prepare
 import tensorflow as tf
 import shutil
 import sys
@@ -149,7 +149,7 @@ def train_core(train_settings):
 
 
     trainer = pl.Trainer(
-        gpus=1,
+        accelerator="auto",
         logger=pl.loggers.TensorBoardLogger('logs/', name=None, version="Smoke"),
         #resume_from_checkpoint=model_full_filename,
         callbacks=[

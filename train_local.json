@@ -1,12 +1,12 @@
 {
-	"train_labels_filename" : "/home/nkozlitin/proj/ultralytics/xxx/spec_labels.txt.train",
-        "validation_labels_filename" : "/home/nkozlitin/proj/ultralytics/xxx/spec_labels.txt.test",
+	"train_labels_filename" : "/home/ivan/mnt/Video/xxx/spec_labels.txt.train",
+        "validation_labels_filename" : "/home/ivan/mnt/Video/xxx/spec_labels.txt.test",
         "nn_model_name": "left1",
-        "model_dir": "/home/nkozlitin/proj/ultralytics/leftmodels",
+        "model_dir": "/home/ivan/proj/ultralytics/leftmodels",
         "early_stopping_patience": 30,
-        "batch_size": 128, 
+        "batch_size": 64, 
         "workers": 8, 
-        "balance": 0.95,
+        "balance": 1,
         "frame_number": 2
 }
 
