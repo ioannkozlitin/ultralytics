@@ -1,10 +1,10 @@
 {
-	"train_labels_filename" : "/home/ivan/mnt/Video/xxx/spec_labels.txt.train",
-        "validation_labels_filename" : "/home/ivan/mnt/Video/xxx/spec_labels.txt.test",
+	"train_labels_filename" : "xxx/spec_labels.txt.train",
+        "validation_labels_filename" : "xxx/spec_labels.txt.test",
         "nn_model_name": "left1",
-        "model_dir": "/home/ivan/proj/ultralytics/leftmodels",
+        "model_dir": "leftmodels",
         "early_stopping_patience": 30,
-        "batch_size": 64, 
+        "batch_size": 16, 
         "workers": 8, 
         "balance": 1,
         "frame_number": 2

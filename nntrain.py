@@ -39,8 +39,8 @@ class SmokeCnn(pl.LightningModule):
                  frame_number, train_labels_filename, validation_labels_filename, new_size, transform = None):
         super().__init__()
         self.net = SmokeCnnModel(frame_number).net
-        self.train_acc = torchmetrics.Accuracy()
-        self.val_acc = torchmetrics.Accuracy()
+        self.train_acc = torchmetrics.Accuracy(task='multiclass', num_classes=2)
+        self.val_acc = torchmetrics.Accuracy(task='multiclass', num_classes=2)
         self.train_labels_filename = train_labels_filename
         self.validation_labels_filename = validation_labels_filename
         self.new_size = new_size
@@ -149,7 +149,8 @@ def train_core(train_settings):
 
 
     trainer = pl.Trainer(
-        accelerator="auto",
+        accelerator="gpu",
+        devices=[1],
         logger=pl.loggers.TensorBoardLogger('logs/', name=None, version="Smoke"),
         #resume_from_checkpoint=model_full_filename,
         callbacks=[
