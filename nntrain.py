@@ -150,7 +150,7 @@ def train_core(train_settings):
 
     trainer = pl.Trainer(
         accelerator="gpu",
-        devices=[1],
+        devices=[0],
         logger=pl.loggers.TensorBoardLogger('logs/', name=None, version="Smoke"),
         #resume_from_checkpoint=model_full_filename,
         callbacks=[
