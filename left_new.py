@@ -21,7 +21,7 @@ model2 = model2.to(device)
 model2.eval()
 
 model = YOLO("luggage8_16.pt")
-results = model.track(source="/home/nkozlitin/video/leftobjects/VID_20230502_192209.mp4", stream=True, show=False, persist=True)
+results = model.track(source="/home/ivan/videos/VID_20230502_192209.mp4", stream=True, show=False, persist=True, conf=0.1)
 
 stack_size = 150
 image_stack=[]
