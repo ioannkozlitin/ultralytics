@@ -17,7 +17,7 @@ if __name__ == '__main__':
     with open(root_path / "all.txt","rt") as f:
         lines = f.readlines()
     
-    paths = [str(root_path.joinpath(Path(line[:-1]))) for line in lines]
+    paths = [line[:-1] for line in lines]
     txts = img2label_paths(paths, "labels")
     
     stack_size = 150
@@ -53,8 +53,8 @@ if __name__ == '__main__':
         xyxy_bottom = torch.tensor(xywhn2xyxy(lb_stack[0][:, 1:5], w=image.shape[1], h=image.shape[0]))
         iou_matrix = box_iou(xyxy_top, xyxy_bottom)
         max_ious, _ = torch.max(iou_matrix,axis=1)
-        bottom_image_name = Path(path_stack[0]).stem
-        top_image_name = Path(path_stack[-1]).stem
+        bottom_image_name = Path(path_stack[0])
+        top_image_name = Path(path_stack[-1])
         #print(max_ious)
                 
         image_bottom = image_stack[0]

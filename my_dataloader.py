@@ -13,7 +13,7 @@ class MyDataset(torch.utils.data.Dataset):
         super().__init__()
 
         with open(labels_filename) as f:
-            self.spec_labels = numpy.array([[float(x_item) for x_item in x.split()] for x in f.read().strip().splitlines() if len(x)])
+            self.spec_labels = [[x_item for x_item in x.split()] for x in f.read().strip().splitlines() if len(x)]
 
         self.root_dataset_path = Path(labels_filename).parent
         self.new_size = new_size
@@ -23,11 +23,12 @@ class MyDataset(torch.utils.data.Dataset):
     def __getitem__(self, item):
         spec_label = self.spec_labels[item]
 
-        i_bottom = self.root_dataset_path / "images" / Path(str(int(spec_label[0]))+".jpg")
-        i_top = self.root_dataset_path / "images" / Path(str(int(spec_label[1]))+".jpg")
+        i_bottom = spec_label[0]
+        i_top = spec_label[1]
         top_image = cv2.imread(str(i_top))
         bottom_image = cv2.imread(str(i_bottom))
-        labels = [int(x) for x in xywhn2xyxy(spec_label[2:6], w=top_image.shape[1], h=top_image.shape[0])]
+        rect = numpy.array([float(x) for x in spec_label[2:6]])
+        labels = [int(x) for x in xywhn2xyxy(rect, w=top_image.shape[1], h=top_image.shape[0])]
         top_image_resized = cv2.resize(top_image[labels[1]:labels[3],labels[0]:labels[2]], self.new_size)
         bottom_image_resized = cv2.resize(bottom_image[labels[1]:labels[3],labels[0]:labels[2]], self.new_size)
         image_cake_tensor = T.ToTensor()(numpy.concatenate([top_image_resized, bottom_image_resized],axis=2))
@@ -37,7 +38,7 @@ class MyDataset(torch.utils.data.Dataset):
         return len(self.spec_labels)
 
 if __name__ == "__main__":
-    root_path = Path("/home/ivan/mnt/Video/xxx")
+    root_path = Path("xxx")
 
     transforms = T.Compose([
         T.RandomRotation(degrees=(-15, 15)),
