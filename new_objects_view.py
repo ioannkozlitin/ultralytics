@@ -12,19 +12,17 @@ def img2label_paths(img_paths, label_folder):
     sa, sb = f'{os.sep}images{os.sep}', f'{os.sep}{label_folder}{os.sep}'  # /images/, /labels/ substrings
     return [sb.join(x.rsplit(sa, 1)).rsplit('.', 1)[0] + '.txt' for x in img_paths]
 
-if __name__ == '__main__':
-    root_path = Path("xxx")
-    with open(root_path / "all.txt","rt") as f:
+def process_video(txt_labels_filename, stack_size, foutput, display=False):
+    with open(txt_labels_filename,"rt") as f:
         lines = f.readlines()
     
-    paths = [line[:-1] for line in lines]
+    paths = [line.strip() for line in lines if len(line.strip())]
     txts = img2label_paths(paths, "labels")
     
-    stack_size = 150
     lb_stack=[]
     image_stack=[]
     path_stack=[]
-    ff = open(root_path / "spec_labels.txt","wt")
+
     for path_,txt_ in zip(paths, txts):
         image = cv2.imread(str(path_))
 
@@ -68,14 +66,21 @@ if __name__ == '__main__':
                 for value in xywh_item:
                     line += str(value)+' '
                 line += f'{iou_condition} {int(cls)}\n'
-                ff.write(line)
+                foutput.write(line)
 
         print(f'{top_image_name}')
 
-        cv2.imshow("image",diff_image)
-        if cv2.waitKey(1)==27:
-            break
-    
-    ff.close()
+        if display:
+            cv2.imshow("image",diff_image)
+            if cv2.waitKey(1)==27:
+                break
 
+if __name__ == '__main__':
+    root_path = Path("xxx")
+    with open(root_path / "videos.txt","rt") as f:
+        videos = f.readlines()
 
+    videos = [item.strip() for item in videos if len(item.strip())]
+    with open(root_path / "spec_labels.txt","wt") as ff:
+        for video in videos:
+            process_video(video, 150, ff)
