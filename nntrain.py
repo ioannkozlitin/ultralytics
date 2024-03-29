@@ -22,7 +22,7 @@ import torchvision.transforms as T
 class SmokeCnnModel(torch.nn.Module):
     def __init__(self, frame_number):
         super().__init__()
-        self.net = tv.models.mobilenet_v3_small(pretrained=False, num_classes=2)
+        self.net = tv.models.mobilenet_v3_small(weights=None, num_classes=2)
         print(f'before: {self.net.features._modules["0"]}')
 
         self.net.features._modules['0'] = tv.ops.misc.Conv2dNormActivation(3*frame_number, 16,
