@@ -76,7 +76,7 @@ def process_video(txt_labels_filename, stack_size, foutput, display=False):
                 break
 
 if __name__ == '__main__':
-    root_path = Path("xxx")
+    root_path = Path("/home/ivan/mnt/Video/xxx")
     with open(root_path / "videos.txt","rt") as f:
         videos = f.readlines()
 

@@ -1,7 +1,7 @@
 {
 	"train_labels_filename" : "/home/ivan/mnt/Video/xxx/spec_labels.txt.train",
         "validation_labels_filename" : "/home/ivan/mnt/Video/xxx/spec_labels.txt.test",
-        "nn_model_name": "left1",
+        "nn_model_name": "left2",
         "model_dir": "leftmodels",
         "early_stopping_patience": 30,
         "batch_size": 16, 
