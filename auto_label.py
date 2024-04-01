@@ -24,8 +24,8 @@ def process_video(video_item):
     return str(root_dataset_folder / txt_file_name)
 
 if __name__ == "__main__":
-    root_folder = Path("/home/ivan/cvdatastore/VideoArchive/MainData")
-    root_dataset_folder = Path("/home/ivan/mnt/Video/xxx")
+    root_folder = Path("/home/nkozlitin/cvdatastore/VideoArchive/MainData")
+    root_dataset_folder = Path("xxx")
     video_list=["LeftObjects/certification/AO_LO_4_SIDE.avi","LeftObjects/certification/AO_LO_3_SIDE.avi","LeftObjects/certification/AO_LO_2_SIDE.avi"]
     image_width = 640
     yolo_nn_name = "luggage8_16.pt"
