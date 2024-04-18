@@ -4,6 +4,7 @@ from pathlib import Path
 from shutil import rmtree
 import multiprocessing
 import yaml
+import json
 import os
 import argparse
 
@@ -28,26 +29,38 @@ def process_video(video_item):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('video_list_yaml', nargs=1, help='list of video files')
-    parser.add_argument('root_dataset_folder', nargs=1, help='root of dataset folder')
-    parser.add_argument('--video_archive_root', nargs='?', help='root of video archive', required=True)
-    parser.add_argument('--image_width', nargs='?', help='name of image_processor build', type=int, default=640)
-    parser.add_argument('--workers_number', nargs='?', help='maximum number of profiles', type=int, default=0)
-    parser.add_argument('--yolo_nn_name', nargs='?', help='profile path for autotuning', required=True)
+    parser.add_argument('video_list_yaml', nargs='?', help='list of video files')
+    parser.add_argument('root_dataset_folder', nargs='?', help='root of dataset folder')
+    parser.add_argument('--video_archive_root', nargs='?', help='root of video archive')
+    parser.add_argument('--image_width', nargs='?', help='name of image_processor build', type=int)
+    parser.add_argument('--workers_number', nargs='?', help='maximum number of profiles', type=int)
+    parser.add_argument('--yolo_nn_name', nargs='?', help='profile path for autotuning')
+    parser.add_argument('--settings', nargs='?', help='settings json file')
     opt = parser.parse_args()
 
-    video_archive_root = Path(os.path.expanduser(opt.video_archive_root))
-    root_dataset_folder = Path(os.path.expanduser(opt.root_dataset_folder))
-    video_list_yaml = os.path.expanduser(opt.video_list_yaml)
-    image_width = opt.image_width[0]
-    workers_number = opt.workers_number[0]
-    yolo_nn_name = opt.yolo_nn_name[0]
+    if opt.__dict__['settings'] is not None:
+        with open(opt.__dict__['settings']) as settings_file:
+            settings = json.load(settings_file)
+    else:
+        settings = dict()
 
-    with open(os.path.expanduser(video_list_yaml)) as video_list_file:
+    for key, value in opt.__dict__.items():
+        if value is not None:
+            settings[key] = value
+
+    print(settings)
+
+    video_archive_root = Path(os.path.expanduser(settings['video_archive_root']))
+    root_dataset_folder = Path(os.path.expanduser(settings['root_dataset_folder']))
+    video_list_yaml = os.path.expanduser(settings['video_list_yaml'])
+    image_width = settings['image_width']
+    workers_number = settings['workers_number']
+    yolo_nn_name = settings['yolo_nn_name']
+
+    with open(video_list_yaml) as video_list_file:
         supervisor_scenario = yaml.safe_load(video_list_file)
 
     video_list = supervisor_scenario['videofiles']
-    print(video_list)
     
     images_path = root_dataset_folder / "images"
     labels_path = root_dataset_folder / "labels"

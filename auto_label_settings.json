@@ -1,0 +1,8 @@
+{
+    "video_list_yaml": "/home/ivan/test_system/RootDir/Settings/Scenarios/personal/kozlitin/left_objects_my.yml",
+    "root_dataset_folder": "xxx",
+    "video_archive_root": "/home/ivan/cvdatastore/VideoArchive",
+    "image_width": 256,
+    "workers_number": 8,
+    "yolo_nn_name": "luggage8_16.pt"
+}
