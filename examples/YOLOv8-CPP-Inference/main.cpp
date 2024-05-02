@@ -29,7 +29,11 @@ int main(int argc, char **argv)
     // Note that in this example the classes are hard-coded and 'classes.txt' is a place holder.
     Inference inf(projectBasePath + "/yolov8_0.523.onnx", frame_size, "classes.txt", runOnGPU);
     cv::VideoCapture video_stream;
+<<<<<<< HEAD
     video_stream.open("/home/ivan/video/1.mp4", cv::CAP_FFMPEG);
+=======
+    video_stream.open("/home/ivan/videos/555/1.mp4", cv::CAP_FFMPEG);
+>>>>>>> 1f2e4ad3ac702960e706129f931e0bdf65df3584
 
     //std::vector<std::string> imageNames;
     //imageNames.push_back(projectBasePath + "/ultralytics/assets/bus.jpg");
