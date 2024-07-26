@@ -11,7 +11,7 @@ def img2label_paths(img_paths, label_folder):
     return [sb.join(x.rsplit(sa, 1)).rsplit('.', 1)[0] + '.txt' for x in img_paths]
 
 if __name__ == '__main__':
-    root_path = Path("/home/neuron-2/datasets/full_dataset_jpg")
+    root_path = Path("/home/neuron-2/datasets/yyy")
     with open(root_path / "all.txt","rt") as f:
         lines = f.readlines()
     
@@ -21,6 +21,9 @@ if __name__ == '__main__':
     for path_,txt_ in zip(paths, txts):
         image = cv2.imread(str(path_))
         annotator = Annotator(image, line_width=3)
+
+        if not os.path.exists(txt_):
+            continue
         
         with open(txt_) as f:
             lb = [x.split() for x in f.read().strip().splitlines() if len(x)]

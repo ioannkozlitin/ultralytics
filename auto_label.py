@@ -12,6 +12,7 @@ def process_video(video_item):
     txt_file_name = video_item.format(VideoArchive="")[1:].replace("/","_").replace(".","_") + ".txt"
     with open(root_dataset_folder / txt_file_name, "w") as f:
         model = YOLO(yolo_nn_name)
+        print('filename: ' + video_item.format(VideoArchive=str(video_archive_root)))
         results = model.track(source=video_item.format(VideoArchive=str(video_archive_root)), stream=True, show=False, persist=True)
         for index,result in enumerate(results):
             image_path=Path(result.path.replace(str(video_archive_root), str(images_path)))
@@ -67,6 +68,8 @@ if __name__ == "__main__":
     
     rmtree(images_path, ignore_errors=True)
     rmtree(labels_path, ignore_errors=True)
+
+    print(video_list)
 
     with multiprocessing.Pool(workers_number) as pool:
         videos = pool.map(process_video, video_list)
