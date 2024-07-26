@@ -11,7 +11,7 @@ def img2label_paths(img_paths, label_folder):
     return [sb.join(x.rsplit(sa, 1)).rsplit('.', 1)[0] + '.txt' for x in img_paths]
 
 if __name__ == '__main__':
-    root_path = Path("xxx")
+    root_path = Path("/home/neuron-2/datasets/full_dataset_jpg")
     with open(root_path / "all.txt","rt") as f:
         lines = f.readlines()
     
@@ -24,11 +24,15 @@ if __name__ == '__main__':
         
         with open(txt_) as f:
             lb = [x.split() for x in f.read().strip().splitlines() if len(x)]
-            lb = np.array(lb, dtype=np.float32)
-            xyxy = xywhn2xyxy(lb[:, 1:5], w=image.shape[1], h=image.shape[0])
-            for cls, xyxy_item in zip(lb[:,0],xyxy):
-                annotator.box_label(xyxy_item, f"{int(cls)}", color=colors(cls, True))
-
+            if len(lb):
+                lb = np.array(lb, dtype=np.float32)
+                xyxy = xywhn2xyxy(lb[:, 1:5], w=image.shape[1], h=image.shape[0])
+                for cls, xyxy_item in zip(lb[:,0],xyxy):
+                    annotator.box_label(xyxy_item, f"{int(cls)}", color=colors(cls, True))
+        
+        if len(lb) < 1:
+            continue
+        
         cv2.imshow("image",image)
         print(image.shape)
         print(f'labels: {xyxy}')
@@ -37,5 +41,4 @@ if __name__ == '__main__':
 
         if cv2.waitKey(0)==27:
             break
-
 
