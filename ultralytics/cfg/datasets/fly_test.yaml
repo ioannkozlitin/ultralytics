@@ -1,11 +1,9 @@
 path: /home/neuron-2/datasets
 train:
- - coco/train2017.txt
- - drone_jpg/train.txt
+ - test/all.txt
 
 val:
- - coco/val2017.txt
- - drone_jpg/validation.txt
+ - test/all.txt
 
 label_folders:
  - fly
