@@ -106,6 +106,7 @@ class Annotation:
         self.filename = None
         self.tracks = dict()  # track id : track
         self.frame_poses = list()  # frame_no -> set(Pos)
+        self.labels = dict()
         self.original_width = 0
         self.original_height = 0
         self.idealfile = None
@@ -142,6 +143,14 @@ class Annotation:
             self.original_height = int(el.text)
         for el in ann_node.findall('./meta/idealfile'):
             self.idealfile = el.text
+        #
+        label_counter = 0
+        for labels_node in ann_node.iter('labels'):
+            for label_el in labels_node.iter('label'):
+                for el in label_el.iter('name'):
+                    self.labels[el.text] = label_counter
+                    label_counter += 1
+        #
         for track_node in ann_node.iter('track'):
             id = track_node.attrib.get("id", track_node.attrib.get("unique_id"))  ## GVNC
             track = Track(self.frame_poses,
