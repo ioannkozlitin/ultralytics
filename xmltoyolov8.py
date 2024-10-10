@@ -6,11 +6,30 @@ from ultralytics.utils.ops import xyxy2xywhn
 from pathlib import Path
 from shutil import rmtree
 import random
+import argparse
+import os
 
 if __name__ == '__main__':
-    annname = "/home/neuron-2/Видео/new/DJI_2024_09_20_15_23_21/annotations.xml"
-    videoname = "/home/neuron-2/Видео/new/2024_09_20_15_23_21_visual_narrow.mp4"
-    root_dataset_folder = Path("/home/neuron-2/Видео/new/DJI_2024_09_20_15_23_21")
+    parser = argparse.ArgumentParser()
+    parser.add_argument('video_name', nargs=1, help='video file name')
+    parser.add_argument('annotation_name', nargs=1, help='video file name')
+    parser.add_argument('root_dataset_folder', nargs=1, help='root of dataset folder')
+    opt = parser.parse_args()
+    #parser.add_argument('video_list_yaml', nargs='?', help='list of video files')
+    #parser.add_argument('root_dataset_folder', nargs='?', help='root of dataset folder')
+    #parser.add_argument('--video_archive_root', nargs='?', help='root of video archive')
+    #parser.add_argument('--image_width', nargs='?', help='name of image_processor build', type=int)
+    #parser.add_argument('--workers_number', nargs='?', help='maximum number of profiles', type=int)
+    #parser.add_argument('--yolo_nn_name', nargs='?', help='profile path for autotuning')
+    #parser.add_argument('--settings', nargs='?', help='settings json file')
+
+    root_dataset_folder = Path(os.path.expanduser(opt.root_dataset_folder[0]))
+    annotation_name = Path(os.path.expanduser(opt.annotation_name[0]))
+    video_name = Path(os.path.expanduser(opt.video_name[0]))
+
+    #annotation_name = "/home/neuron-2/Видео/new/DJI_2024_09_20_15_23_21/annotations.xml"
+    #video_name = "/home/neuron-2/Видео/new/2024_09_20_15_23_21_visual_narrow.mp4"
+    #root_dataset_folder = Path("/home/neuron-2/Видео/new/DJI_2024_09_20_15_23_21")
 
     images_path = root_dataset_folder / "images"
     labels_path = root_dataset_folder / "labels"
@@ -21,9 +40,9 @@ if __name__ == '__main__':
     labels_path.mkdir(parents=True, exist_ok=True)
 
     annotation = Annotation()
-    annotation.load(annname)
+    annotation.load(annotation_name)
 
-    cap = cv2.VideoCapture(videoname)
+    cap = cv2.VideoCapture(video_name)
 
     images_list = []
     while True:
