@@ -3,10 +3,21 @@ import numpy as np
 from annotation import Annotation
 from ultralytics.utils.plotting import Annotator, colors
 from ultralytics.utils.ops import xyxy2xywhn
+from pathlib import Path
+from shutil import rmtree
 
 if __name__ == '__main__':
     annname = "/home/neuron-2/Видео/new/DJI_2024_09_20_15_23_21/annotations.xml"
     videoname = "/home/neuron-2/Видео/new/2024_09_20_15_23_21_visual_narrow.mp4"
+    root_dataset_folder = Path("/home/neuron-2/Видео/new/DJI_2024_09_20_15_23_21")
+
+    images_path = root_dataset_folder / "images"
+    labels_path = root_dataset_folder / "labels"
+
+    rmtree(images_path, ignore_errors=True)
+    rmtree(labels_path, ignore_errors=True)
+    images_path.mkdir(parents=True, exist_ok=True)
+    labels_path.mkdir(parents=True, exist_ok=True)
 
     annotation = Annotation()
     annotation.load(annname)
