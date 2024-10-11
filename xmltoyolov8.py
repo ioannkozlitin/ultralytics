@@ -14,6 +14,9 @@ if __name__ == '__main__':
     parser.add_argument('video_name', nargs=1, help='video file name')
     parser.add_argument('annotation_name', nargs=1, help='video file name')
     parser.add_argument('root_dataset_folder', nargs=1, help='root of dataset folder')
+    parser.add_argument('--nfold', nargs='?', help='nfold for train/validation split', default=5, type=int)
+    parser.add_argument('--k', nargs='?', help='k for train/validation split', default=2, type=int)
+    parser.add_argument('--show', help='show video', action='store_true')
     opt = parser.parse_args()
     #parser.add_argument('video_list_yaml', nargs='?', help='list of video files')
     #parser.add_argument('root_dataset_folder', nargs='?', help='root of dataset folder')
@@ -60,6 +63,8 @@ if __name__ == '__main__':
         annotator = Annotator(frame, line_width=3)
         frame_annotations=list()
         for pos in current_annotation:
+            if pos.is_outside:
+                continue
             xywhn = xyxy2xywhn(np.array([pos.x1, pos.y1, pos.x2, pos.y2]), w = annotation.original_width, h = annotation.original_height)
             track_label = annotation.labels[pos.track.label]
             lxywhn = xywhn.tolist()
@@ -75,9 +80,10 @@ if __name__ == '__main__':
                         print(el, file=f, end=' ')
                     print(file=f)
 
-        cv2.imshow('frame', frame)
-        if cv2.waitKey(1) == 27:
-            break
+        if opt.show:
+            cv2.imshow('frame', frame)
+            if cv2.waitKey(0) == 27:
+                break
         
     nfold = 5
     k = 2

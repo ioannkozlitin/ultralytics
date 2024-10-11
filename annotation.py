@@ -2,7 +2,7 @@ from collections import defaultdict
 import copy
 from pathlib import Path
 import xml.etree.ElementTree as ET
-
+import zipfile
 import cv2
 
 
@@ -132,7 +132,13 @@ class Annotation:
         assert Path(filename).is_file(), "annotation file not exists: " + filename
         self.clear()
         self.filename = filename
-        tree = ET.parse(filename)
+        if Path(filename).suffix == '.zip':
+            with zipfile.ZipFile(filename) as myzip:
+                with myzip.open('annotations.xml') as myfile:
+                    tree = ET.parse(myfile)
+        else:
+            tree = ET.parse(filename)
+        
         root = tree.getroot()
         assert root.tag == "annotations"
         ann_node = root
