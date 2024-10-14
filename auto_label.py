@@ -7,6 +7,7 @@ import yaml
 import json
 import os
 import argparse
+import xml.etree.ElementTree as ET
 
 def process_video(video_item):
     txt_file_name = video_item.format(VideoArchive="")[1:].replace("/","_").replace(".","_") + ".txt"
@@ -28,6 +29,37 @@ def process_video(video_item):
     
     return str(root_dataset_folder / txt_file_name)
 
+def process_video_xml(video_item):
+    xml_file_name = video_item.format(VideoArchive="")[1:].replace("/","_").replace(".","_") + ".xml"
+    model = YOLO(yolo_nn_name)
+    print('filename: ' + video_item.format(VideoArchive=str(video_archive_root)))
+    results = model.track(source=video_item.format(VideoArchive=str(video_archive_root)), stream=True, show=False, persist=True)
+    tracks = dict()
+    for index,result in enumerate(results):
+        boxes_data = result.boxes.data
+        if result.boxes.is_track:
+            for boxes_data_item in boxes_data:
+                track_id = int(boxes_data_item[4])
+                if track_id not in tracks:
+                    tracks[track_id] = {"boxes": list(), "label" : int(boxes_data_item[6])}
+                
+                box_list = boxes_data_item[0:4].tolist()
+                box_list.insert(0, index)
+                tracks[track_id]["boxes"].append(box_list)
+            #
+        if index > 100:
+            break
+    
+    root = ET.fromstring("<annotations></annotations>\n")
+    tree = ET.ElementTree(element=root)
+    for id, track in tracks.items():
+        track_node = ET.Element("track", attrib={"id": str(id), "label": str(track["label"]), "source": "semi-auto"}) 
+        for box in track["boxes"]:
+            track_node.append(ET.Element("box", attrib={"frame" : str(int(box[0]))}))
+        root.append(track_node)
+    tree.write(root_dataset_folder / xml_file_name)
+    return str(root_dataset_folder / xml_file_name)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('video_list_yaml', nargs='?', help='list of video files')
@@ -37,6 +69,7 @@ if __name__ == "__main__":
     parser.add_argument('--workers_number', nargs='?', help='maximum number of profiles', type=int)
     parser.add_argument('--yolo_nn_name', nargs='?', help='profile path for autotuning')
     parser.add_argument('--settings', nargs='?', help='settings json file')
+    parser.add_argument('--xml_output', help='show video', action='store_true')
     opt = parser.parse_args()
 
     if opt.__dict__['settings'] is not None:
@@ -57,6 +90,7 @@ if __name__ == "__main__":
     image_width = settings['image_width']
     workers_number = settings['workers_number']
     yolo_nn_name = settings['yolo_nn_name']
+    xml_output = settings['xml_output']
 
     with open(video_list_yaml) as video_list_file:
         supervisor_scenario = yaml.safe_load(video_list_file)
@@ -72,7 +106,11 @@ if __name__ == "__main__":
     print(video_list)
 
     with multiprocessing.Pool(workers_number) as pool:
-        videos = pool.map(process_video, video_list)
+        if xml_output:
+            videos = pool.map(process_video_xml, video_list)
+        else:
+            videos = pool.map(process_video, video_list)
+
         with open(root_dataset_folder / "videos.txt", "w") as f:
             for video in videos:
                 f.write(video+'\n')
