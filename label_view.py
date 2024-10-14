@@ -11,7 +11,7 @@ def img2label_paths(img_paths, label_folder):
     return [sb.join(x.rsplit(sa, 1)).rsplit('.', 1)[0] + '.txt' for x in img_paths]
 
 if __name__ == '__main__':
-    root_path = Path("/home/neuron-2/datasets/yyy")
+    root_path = Path("/home/neuron-2/datasets/ccc0")
     with open(root_path / "all.txt","rt") as f:
         lines = f.readlines()
     

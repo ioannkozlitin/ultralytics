@@ -82,7 +82,7 @@ if __name__ == '__main__':
 
         if opt.show:
             cv2.imshow('frame', frame)
-            if cv2.waitKey(0) == 27:
+            if cv2.waitKey(1) == 27:
                 break
         
     nfold = 5
