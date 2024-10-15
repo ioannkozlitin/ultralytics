@@ -8,6 +8,9 @@ import json
 import os
 import argparse
 import xml.etree.ElementTree as ET
+import torch
+from ultralytics.utils.metrics import box_iou
+import numpy as np
 
 def process_video(video_item):
     txt_file_name = video_item.format(VideoArchive="")[1:].replace("/","_").replace(".","_") + ".txt"
@@ -29,33 +32,66 @@ def process_video(video_item):
     
     return str(root_dataset_folder / txt_file_name)
 
+def tracks_iou(tracks, box):
+    track_boxes = np.array([[float(index)] + track["boxes"][-1][1:] for index,track in tracks.items() if len(track["boxes"])])
+    if len(track_boxes):
+        iou = box_iou(torch.tensor(track_boxes[:,1:]), torch.tensor([box])).numpy().reshape(-1)
+        #print(f'iou: {np.argmax(iou)} {track_boxes}')
+        return ((int(track_boxes[np.argmax(iou),0]),np.max(iou)))
+    else:
+        return (-1,0.0)
+
+    #print(torch.tensor(track_boxes).shape, torch.tensor([box]).shape)
+
 def process_video_xml(video_item):
+    track_counter = 1
+    tracks = dict()
+    label_names = {4 : "plane"}
     xml_file_name = video_item.format(VideoArchive="")[1:].replace("/","_").replace(".","_") + ".xml"
     model = YOLO(yolo_nn_name)
     print('filename: ' + video_item.format(VideoArchive=str(video_archive_root)))
-    results = model.track(source=video_item.format(VideoArchive=str(video_archive_root)), stream=True, show=False, persist=True)
-    tracks = dict()
+    results = model.track(source=video_item.format(VideoArchive=str(video_archive_root)), stream=True, show=False, persist=True, conf=0.01, iou=0.05)
     for index,result in enumerate(results):
+        if index == 0:
+            height, width = result.orig_shape
         boxes_data = result.boxes.data
-        if result.boxes.is_track:
-            for boxes_data_item in boxes_data:
-                track_id = int(boxes_data_item[4])
-                if track_id not in tracks:
-                    tracks[track_id] = {"boxes": list(), "label" : int(boxes_data_item[6])}
-                
-                box_list = boxes_data_item[0:4].tolist()
-                box_list.insert(0, index)
-                tracks[track_id]["boxes"].append(box_list)
+        track_boxes = [[float(id)] + track["boxes"][-1][1:] for id, track in tracks.items() if len(track["boxes"])]
+        if len(track_boxes):
+            print(np.array(box_iou(result.boxes.xyxy.to(device="cpu"), torch.tensor(track_boxes)[:,1:])))
+        for boxes_data_item in boxes_data:             
+            box = boxes_data_item[0:4].tolist()
+            box.insert(0, index)
             #
+            track_id, max_iou = tracks_iou(tracks, box[1:])
+            if max_iou == 0:
+                tracks[track_counter] = {"boxes": list(), "label" : label_names[int(boxes_data_item[-1])], "last_index" : -1}
+                track_id = track_counter
+                track_counter += 1
+                                
+            if tracks[track_id]["last_index"] != index:
+                tracks[track_id]["boxes"].append(box)
+                tracks[track_id]["last_index"] = index
+
+
         if index > 100:
             break
     
     root = ET.fromstring("<annotations></annotations>\n")
     tree = ET.ElementTree(element=root)
+    root.append(ET.fromstring(f"<meta><task><original_size><width>{width}</width><height>{height}</height></original_size></task></meta>"))
     for id, track in tracks.items():
         track_node = ET.Element("track", attrib={"id": str(id), "label": str(track["label"]), "source": "semi-auto"}) 
-        for box in track["boxes"]:
-            track_node.append(ET.Element("box", attrib={"frame" : str(int(box[0]))}))
+        last_index = len(track["boxes"])
+        for index, box in enumerate(track["boxes"]):
+            track_node.append(ET.Element("box", attrib={"frame" : str(int(box[0]))
+                                                        ,"keyframe" : "1"
+                                                        ,"outside"  : str(int(index == last_index-1))
+                                                        ,"occluded" : "0"
+                                                        ,"xtl" : str(box[1])
+                                                        ,"ytl" : str(box[2])
+                                                        ,"xbr" : str(box[3])
+                                                        ,"ybr" : str(box[4])
+                                                        ,"z_order" : "0"}))
         root.append(track_node)
     tree.write(root_dataset_folder / xml_file_name)
     return str(root_dataset_folder / xml_file_name)

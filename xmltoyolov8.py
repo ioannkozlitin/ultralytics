@@ -66,7 +66,10 @@ if __name__ == '__main__':
             if pos.is_outside:
                 continue
             xywhn = xyxy2xywhn(np.array([pos.x1, pos.y1, pos.x2, pos.y2]), w = annotation.original_width, h = annotation.original_height)
-            track_label = annotation.labels[pos.track.label]
+            if len(annotation.labels):
+                track_label = annotation.labels[pos.track.label]
+            else:
+                track_label = pos.track.label
             lxywhn = xywhn.tolist()
             lxywhn.insert(0,track_label)
             frame_annotations.append(lxywhn)
