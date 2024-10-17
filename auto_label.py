@@ -166,28 +166,9 @@ def process_video_xml(video_item):
             if label_id in label_names:
                 trackstore.add_track(box=box_data[0:4].cpu(), label=label_names[label_id], frame=frame_number)
         trackstore.delete_old_tracks(frame_number)
-            #for box_data in result.boxes.data:
-            #    trackstore.add_box_to_track(n=0, box=box_data[0:4].cpu(), frame=frame_number)
-        #boxes_data = result.boxes.data
-        #track_boxes = [[float(id)] + track["boxes"][-1][1:] for id, track in tracks.items() if len(track["boxes"])]
-        #if len(track_boxes):
-        #    print(np.array(box_iou(result.boxes.xyxy.to(device="cpu"), torch.tensor(track_boxes)[:,1:])))
-        #for boxes_data_item in boxes_data:             
-        #    box = boxes_data_item[0:4].tolist()
-        #    box.insert(0, index)
-        #    #
-        #    track_id, max_iou = tracks_iou(tracks, box[1:])
-        #    if max_iou == 0:
-        #        tracks[track_counter] = {"boxes": list(), "label" : label_names[int(boxes_data_item[-1])], "last_index" : -1}
-        #        track_id = track_counter
-        #        track_counter += 1
-        #                        
-        #    if tracks[track_id]["last_index"] != index:
-        #        tracks[track_id]["boxes"].append(box)
-        #        tracks[track_id]["last_index"] = index
-
-        if frame_number > 3000:
-            break
+        
+        #if frame_number > 3000:
+        #    break
     trackstore.dump(root_dataset_folder / xml_file_name)    
     return str(root_dataset_folder / xml_file_name)
 
