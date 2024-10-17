@@ -64,11 +64,43 @@ class TrackStore:
         self.width = width
         self.height = height
 
-    def addtrack(self, box, label, frame):
+    def add_track(self, box, label, frame):
         self.tracks.append(Track(box, label, frame))
 
-    def addboxtotrack(self, n, box, frame):
+    def add_box_to_track(self, n, box, frame):
         self.tracks[n].add(box, frame)
+
+    def add_best_boxes_to_tracks(self, boxes_xyxy, frame):
+        iou_matrix = self.track_boxes_iou_matrix(boxes_xyxy)
+        if iou_matrix is None:
+            return [n for n, _ in enumerate(boxes_xyxy)]
+        iou_matrix_shape = iou_matrix.shape
+        track_ids_ = self.track_ids()
+        box_enable = [True] * iou_matrix_shape[0]
+        track_enable = [True] * iou_matrix_shape[1]
+        #print(iou_matrix.shape, track_enable, box_enable)
+        #print(self.track_ids())
+        run = True
+        while run:
+            max_iou = 0
+            best_box_id = 0
+            best_track_number = 0
+            run = False
+            for track_number, track_enable_sign in enumerate(track_enable):
+                if track_enable_sign:
+                    for box_id, box_enable_sign in enumerate(box_enable):
+                        if box_enable_sign:
+                            run = True
+                            if(iou_matrix[box_id, track_number] >= max_iou):
+                                max_iou = iou_matrix[box_id, track_number]
+                                best_box_id = box_id
+                                best_track_number = track_number
+            if run:
+                track_enable[best_track_number] = False
+                box_enable[best_box_id] = False
+                self.add_box_to_track(track_ids_[best_track_number], boxes_xyxy[best_box_id], frame)
+                print(best_box_id, track_ids_[best_track_number], max_iou)
+        return [n for n, enable_flag in enumerate(box_enable) if enable_flag]
 
     def empty(self):
         return len(self.tracks) == 0
@@ -76,12 +108,22 @@ class TrackStore:
     def track_boxes(self):
         return torch.tensor([track.boxes[-1].numpy() for track in self.tracks if track.active])
     
+    def track_ids(self):
+        return [id for id, track in enumerate(self.tracks) if track.active]
+
     def track_boxes_iou_matrix(self, boxes_xyxy):
+        #print(f'TRACK BOXES {self.tracks}')
         track_boxes = self.track_boxes()
         if len(track_boxes):
             return np.array(box_iou(boxes_xyxy, self.track_boxes()))
         else:
             return None
+        
+    def delete_old_tracks(self, frame):
+        for track in self.tracks:
+            if len(track.frames):
+                if(frame - track.frames[-1] > 3):
+                    track.active = False
 
     def dump(self, xml_file_name):
         root = ET.fromstring("<annotations></annotations>\n")
@@ -109,21 +151,23 @@ def process_video_xml(video_item):
     xml_file_name = video_item.format(VideoArchive="")[1:].replace("/","_").replace(".","_") + ".xml"
     model = YOLO(yolo_nn_name)
     print('filename: ' + video_item.format(VideoArchive=str(video_archive_root)))
-    results = model.track(source=video_item.format(VideoArchive=str(video_archive_root)), stream=True, show=False, persist=True, conf=0.01, iou=0.05)
+    results = model.track(source=video_item.format(VideoArchive=str(video_archive_root)), stream=True, show=False, persist=True, conf=0.1, iou=0.01)
     trackstore = None
     for frame_number,result in enumerate(results):
         if trackstore is None:
             height, width = result.orig_shape
             trackstore = TrackStore(width, height)
         boxes_xyxy = result.boxes.xyxy.cpu()
-        print(trackstore.track_boxes_iou_matrix(boxes_xyxy))
-        for box_data in result.boxes.data:
-            box_xyxy = box_data[0:4].cpu()
-            if trackstore.empty():
-                label = label_names[int(box_data[-1])] if int(box_data[-1]) in label_names else str(int(box_data[-1]))
-                trackstore.addtrack(box=box_xyxy, label=label, frame=frame_number)
-            else:
-                trackstore.addboxtotrack(n=0, box=box_xyxy, frame=frame_number)
+        notrack_box_ids = trackstore.add_best_boxes_to_tracks(boxes_xyxy, frame_number)
+        print(notrack_box_ids)
+        for id in notrack_box_ids:
+            box_data = result.boxes.data[id]
+            label_id = int(box_data[-1])
+            if label_id in label_names:
+                trackstore.add_track(box=box_data[0:4].cpu(), label=label_names[label_id], frame=frame_number)
+        trackstore.delete_old_tracks(frame_number)
+            #for box_data in result.boxes.data:
+            #    trackstore.add_box_to_track(n=0, box=box_data[0:4].cpu(), frame=frame_number)
         #boxes_data = result.boxes.data
         #track_boxes = [[float(id)] + track["boxes"][-1][1:] for id, track in tracks.items() if len(track["boxes"])]
         #if len(track_boxes):
@@ -142,7 +186,7 @@ def process_video_xml(video_item):
         #        tracks[track_id]["boxes"].append(box)
         #        tracks[track_id]["last_index"] = index
 
-        if frame_number > 100:
+        if frame_number > 3000:
             break
     trackstore.dump(root_dataset_folder / xml_file_name)    
     return str(root_dataset_folder / xml_file_name)
