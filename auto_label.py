@@ -170,8 +170,8 @@ def process_video_xml(video_item):
                     trackstore.add_track(box=box_data[0:4].cpu(), label=current_label_names[label_id], frame=frame_number)
         trackstore.delete_old_tracks(frame_number)
         
-        if frame_number > 10:
-            break
+        #if frame_number > 10:
+        #    break
     trackstore.dump(root_dataset_folder / xml_file_name)    
     return str(root_dataset_folder / xml_file_name)
 
