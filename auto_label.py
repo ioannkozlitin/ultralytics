@@ -17,7 +17,7 @@ def process_video(video_item):
     with open(root_dataset_folder / txt_file_name, "w") as f:
         model = YOLO(yolo_nn_name)
         print('filename: ' + video_item.format(VideoArchive=str(video_archive_root)))
-        results = model.track(source=video_item.format(VideoArchive=str(video_archive_root)), stream=True, show=False, persist=True)
+        results = model.track(source=video_item.format(VideoArchive=str(video_archive_root)), stream=True, show=False, persist=True, conf=conf, iou=iou)
         for index,result in enumerate(results):
             image_path=Path(result.path.replace(str(video_archive_root), str(images_path)))
             label_path=Path(result.path.replace(str(video_archive_root), str(labels_path)))
@@ -78,8 +78,6 @@ class TrackStore:
         track_ids_ = self.track_ids()
         box_enable = [True] * iou_matrix_shape[0]
         track_enable = [True] * iou_matrix_shape[1]
-        #print(iou_matrix.shape, track_enable, box_enable)
-        #print(self.track_ids())
         run = True
         while run:
             max_iou = 0
@@ -99,14 +97,14 @@ class TrackStore:
                 track_enable[best_track_number] = False
                 box_enable[best_box_id] = False
                 self.add_box_to_track(track_ids_[best_track_number], boxes_xyxy[best_box_id], frame)
-                print(best_box_id, track_ids_[best_track_number], max_iou)
+                #print(best_box_id, track_ids_[best_track_number], max_iou)
         return [n for n, enable_flag in enumerate(box_enable) if enable_flag]
 
     def empty(self):
         return len(self.tracks) == 0
     
     def track_boxes(self):
-        return torch.tensor([track.boxes[-1].numpy() for track in self.tracks if track.active])
+        return torch.tensor(np.array([track.boxes[-1].numpy() for track in self.tracks if track.active]))
     
     def track_ids(self):
         return [id for id, track in enumerate(self.tracks) if track.active]
@@ -147,28 +145,33 @@ class TrackStore:
         tree.write(xml_file_name)        
 
 def process_video_xml(video_item):
-    label_names = {4 : "plane"}
     xml_file_name = video_item.format(VideoArchive="")[1:].replace("/","_").replace(".","_") + ".xml"
     model = YOLO(yolo_nn_name)
     print('filename: ' + video_item.format(VideoArchive=str(video_archive_root)))
-    results = model.track(source=video_item.format(VideoArchive=str(video_archive_root)), stream=True, show=False, persist=True, conf=0.1, iou=0.01)
+    results = model.track(source=video_item.format(VideoArchive=str(video_archive_root)), stream=True, show=False, persist=True, conf=conf, iou=iou)
+    #results = model.predict(source=video_item.format(VideoArchive=str(video_archive_root)), stream=True, show=False, conf=0.1, iou=0.01)
     trackstore = None
     for frame_number,result in enumerate(results):
         if trackstore is None:
+            if label_names is None:
+                current_label_names = result.names
+            else:
+                current_label_names = label_names
             height, width = result.orig_shape
             trackstore = TrackStore(width, height)
         boxes_xyxy = result.boxes.xyxy.cpu()
         notrack_box_ids = trackstore.add_best_boxes_to_tracks(boxes_xyxy, frame_number)
-        print(notrack_box_ids)
+        #print(notrack_box_ids)
         for id in notrack_box_ids:
             box_data = result.boxes.data[id]
-            label_id = int(box_data[-1])
-            if label_id in label_names:
-                trackstore.add_track(box=box_data[0:4].cpu(), label=label_names[label_id], frame=frame_number)
+            if box_data[4] > capture_conf:
+                label_id = int(box_data[-1])
+                if label_id in current_label_names:
+                    trackstore.add_track(box=box_data[0:4].cpu(), label=current_label_names[label_id], frame=frame_number)
         trackstore.delete_old_tracks(frame_number)
         
-        #if frame_number > 3000:
-        #    break
+        if frame_number > 10:
+            break
     trackstore.dump(root_dataset_folder / xml_file_name)    
     return str(root_dataset_folder / xml_file_name)
 
@@ -182,6 +185,10 @@ if __name__ == "__main__":
     parser.add_argument('--yolo_nn_name', nargs='?', help='profile path for autotuning')
     parser.add_argument('--settings', nargs='?', help='settings json file')
     parser.add_argument('--xml_output', help='show video', action='store_true')
+    parser.add_argument('--conf', help='confidence threshold', default=0.1)
+    parser.add_argument('--capture_conf', help='capture confidence threshold', default=0.5)
+    parser.add_argument('--iou', help='iou nms', default=0.01)
+    parser.add_argument('--label_names_yaml', help='yaml file with label names', default='')
     opt = parser.parse_args()
 
     if opt.__dict__['settings'] is not None:
@@ -203,9 +210,19 @@ if __name__ == "__main__":
     workers_number = settings['workers_number']
     yolo_nn_name = settings['yolo_nn_name']
     xml_output = settings['xml_output']
+    conf = settings['conf']
+    capture_conf = settings['capture_conf']
+    iou = settings['iou']
+    label_names_yaml = settings['label_names_yaml']
 
     with open(video_list_yaml) as video_list_file:
         supervisor_scenario = yaml.safe_load(video_list_file)
+
+    if Path(label_names_yaml).is_file():
+        with open(label_names_yaml) as f:
+            label_names = yaml.safe_load(f)
+    else:
+        label_names = None
 
     video_list = supervisor_scenario['videofiles']
     
