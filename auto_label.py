@@ -49,14 +49,24 @@ class Track:
         self.frames = [frame]
         self.label = label
         self.active = True
+        self.iou_sum = 0
+        self.ious = [0]
 
-    def add(self, box, frame):
+    def add(self, box, frame, iou):
         if self.frames[-1] != frame:
             self.boxes.append(box)
             self.frames.append(frame)
+            self.ious.append(iou)
+            self.iou_sum += iou
 
     def frame_boxes(self):
-        return zip(self.frames, self.boxes)
+        return zip(self.frames, self.boxes, self.ious)
+    
+    def get_mean_iou(self):
+        mean = self.iou_sum / len(self.frames)
+        #if len(self.frames) > 1:
+        #    print(self.iou_sum, len(self.frames))
+        return mean
 
 class TrackStore:
     def __init__(self, width, height):
@@ -67,8 +77,8 @@ class TrackStore:
     def add_track(self, box, label, frame):
         self.tracks.append(Track(box, label, frame))
 
-    def add_box_to_track(self, n, box, frame):
-        self.tracks[n].add(box, frame)
+    def add_box_to_track(self, n, box, frame, iou):
+        self.tracks[n].add(box, frame, iou)
 
     def add_best_boxes_to_tracks(self, boxes_xyxy, frame):
         iou_matrix = self.track_boxes_iou_matrix(boxes_xyxy)
@@ -88,15 +98,15 @@ class TrackStore:
                 if track_enable_sign:
                     for box_id, box_enable_sign in enumerate(box_enable):
                         if box_enable_sign:
-                            run = True
-                            if(iou_matrix[box_id, track_number] >= max_iou):
+                            if(iou_matrix[box_id, track_number] > max_iou):
+                                run = True
                                 max_iou = iou_matrix[box_id, track_number]
                                 best_box_id = box_id
                                 best_track_number = track_number
             if run:
                 track_enable[best_track_number] = False
                 box_enable[best_box_id] = False
-                self.add_box_to_track(track_ids_[best_track_number], boxes_xyxy[best_box_id], frame)
+                self.add_box_to_track(track_ids_[best_track_number], boxes_xyxy[best_box_id], frame, max_iou)
                 #print(best_box_id, track_ids_[best_track_number], max_iou)
         return [n for n, enable_flag in enumerate(box_enable) if enable_flag]
 
@@ -117,20 +127,26 @@ class TrackStore:
         else:
             return None
         
-    def delete_old_tracks(self, frame):
+    def delete_old_tracks(self, frame, wait_frames):
         for track in self.tracks:
             if len(track.frames):
-                if(frame - track.frames[-1] > 3):
+                if(frame - track.frames[-1] > wait_frames):
                     track.active = False
 
     def dump(self, xml_file_name):
+        if len(self.tracks) == 0:
+            return False
+        
         root = ET.fromstring("<annotations></annotations>\n")
         tree = ET.ElementTree(element=root)
         root.append(ET.fromstring(f"<meta><task><original_size><width>{self.width}</width><height>{self.height}</height></original_size></task></meta>"))
         for id, track in enumerate(self.tracks):
+            if track.get_mean_iou() > 0.7:
+                continue
+
             track_node = ET.Element("track", attrib={"id": str(id), "label": str(track.label), "source": "semi-auto"}) 
             last_index = len(track.boxes)
-            for index, (frame, box) in enumerate(track.frame_boxes()):
+            for index, (frame, box, iou) in enumerate(track.frame_boxes()):
                 box = box.numpy()
                 track_node.append(ET.Element("box", attrib={"frame" : str(frame)
                                                         ,"keyframe" : "1"
@@ -140,16 +156,18 @@ class TrackStore:
                                                         ,"ytl" : str(box[1])
                                                         ,"xbr" : str(box[2])
                                                         ,"ybr" : str(box[3])
+                                                        ,"iou" : str(iou) 
                                                         ,"z_order" : "0"}))
             root.append(track_node)
         tree.write(xml_file_name)        
+        return True
 
 def process_video_xml(video_item):
     xml_file_name = video_item.format(VideoArchive="")[1:].replace("/","_").replace(".","_") + ".xml"
     model = YOLO(yolo_nn_name)
     print('filename: ' + video_item.format(VideoArchive=str(video_archive_root)))
-    results = model.track(source=video_item.format(VideoArchive=str(video_archive_root)), stream=True, show=False, persist=True, conf=conf, iou=iou)
-    #results = model.predict(source=video_item.format(VideoArchive=str(video_archive_root)), stream=True, show=False, conf=0.1, iou=0.01)
+    #results = model.track(source=video_item.format(VideoArchive=str(video_archive_root)), stream=True, show=False, persist=True, conf=conf, iou=iou)
+    results = model.predict(source=video_item.format(VideoArchive=str(video_archive_root)), stream=True, show=False, conf=0.1, iou=0.01, verbose=False)
     trackstore = None
     for frame_number,result in enumerate(results):
         if trackstore is None:
@@ -168,12 +186,16 @@ def process_video_xml(video_item):
                 label_id = int(box_data[-1])
                 if label_id in current_label_names:
                     trackstore.add_track(box=box_data[0:4].cpu(), label=current_label_names[label_id], frame=frame_number)
-        trackstore.delete_old_tracks(frame_number)
+        trackstore.delete_old_tracks(frame_number, wait_frames)
         
         #if frame_number > 10:
         #    break
-    trackstore.dump(root_dataset_folder / xml_file_name)    
-    return str(root_dataset_folder / xml_file_name)
+
+    print("done: ", root_dataset_folder / xml_file_name)
+    if trackstore.dump(root_dataset_folder / xml_file_name):
+        return str(root_dataset_folder / xml_file_name)
+    else:
+        return ""
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -185,10 +207,11 @@ if __name__ == "__main__":
     parser.add_argument('--yolo_nn_name', nargs='?', help='profile path for autotuning')
     parser.add_argument('--settings', nargs='?', help='settings json file')
     parser.add_argument('--xml_output', help='show video', action='store_true')
-    parser.add_argument('--conf', help='confidence threshold', default=0.1)
-    parser.add_argument('--capture_conf', help='capture confidence threshold', default=0.5)
-    parser.add_argument('--iou', help='iou nms', default=0.01)
-    parser.add_argument('--label_names_yaml', help='yaml file with label names', default='')
+    parser.add_argument('--conf', nargs='?', help='confidence threshold')
+    parser.add_argument('--capture_conf', nargs='?', help='capture confidence threshold')
+    parser.add_argument('--iou', nargs='?', help='iou nms')
+    parser.add_argument('--label_names_yaml', nargs='?', help='yaml file with label names')
+    parser.add_argument('--wait_frames', nargs='?', help='number of frames before delete track')
     opt = parser.parse_args()
 
     if opt.__dict__['settings'] is not None:
@@ -210,10 +233,11 @@ if __name__ == "__main__":
     workers_number = settings['workers_number']
     yolo_nn_name = settings['yolo_nn_name']
     xml_output = settings['xml_output']
-    conf = settings['conf']
-    capture_conf = settings['capture_conf']
-    iou = settings['iou']
+    conf = float(settings['conf'])
+    capture_conf = float(settings['capture_conf'])
+    iou = float(settings['iou'])
     label_names_yaml = settings['label_names_yaml']
+    wait_frames = settings['wait_frames']
 
     with open(video_list_yaml) as video_list_file:
         supervisor_scenario = yaml.safe_load(video_list_file)
@@ -242,4 +266,5 @@ if __name__ == "__main__":
 
         with open(root_dataset_folder / "videos.txt", "w") as f:
             for video in videos:
-                f.write(video+'\n')
+                if video != "":
+                    f.write(video+'\n')

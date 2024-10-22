@@ -45,7 +45,7 @@ if __name__ == '__main__':
     annotation = Annotation()
     annotation.load(annotation_name)
 
-    cap = cv2.VideoCapture(video_name)
+    cap = cv2.VideoCapture(str(video_name))
 
     images_list = []
     while True:
