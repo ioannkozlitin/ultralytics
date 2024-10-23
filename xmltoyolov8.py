@@ -11,28 +11,17 @@ import os
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('video_name', nargs=1, help='video file name')
     parser.add_argument('annotation_name', nargs=1, help='video file name')
     parser.add_argument('root_dataset_folder', nargs=1, help='root of dataset folder')
+    parser.add_argument('--video_name', help='video file name', default='')
     parser.add_argument('--nfold', nargs='?', help='nfold for train/validation split', default=5, type=int)
     parser.add_argument('--k', nargs='?', help='k for train/validation split', default=2, type=int)
     parser.add_argument('--show', help='show video', action='store_true')
     opt = parser.parse_args()
-    #parser.add_argument('video_list_yaml', nargs='?', help='list of video files')
-    #parser.add_argument('root_dataset_folder', nargs='?', help='root of dataset folder')
-    #parser.add_argument('--video_archive_root', nargs='?', help='root of video archive')
-    #parser.add_argument('--image_width', nargs='?', help='name of image_processor build', type=int)
-    #parser.add_argument('--workers_number', nargs='?', help='maximum number of profiles', type=int)
-    #parser.add_argument('--yolo_nn_name', nargs='?', help='profile path for autotuning')
-    #parser.add_argument('--settings', nargs='?', help='settings json file')
 
     root_dataset_folder = Path(os.path.expanduser(opt.root_dataset_folder[0]))
     annotation_name = Path(os.path.expanduser(opt.annotation_name[0]))
-    video_name = Path(os.path.expanduser(opt.video_name[0]))
-
-    #annotation_name = "/home/neuron-2/Видео/new/DJI_2024_09_20_15_23_21/annotations.xml"
-    #video_name = "/home/neuron-2/Видео/new/2024_09_20_15_23_21_visual_narrow.mp4"
-    #root_dataset_folder = Path("/home/neuron-2/Видео/new/DJI_2024_09_20_15_23_21")
+    video_name = str(Path(os.path.expanduser(opt.video_name)))
 
     images_path = root_dataset_folder / "images"
     labels_path = root_dataset_folder / "labels"
@@ -45,9 +34,13 @@ if __name__ == '__main__':
     annotation = Annotation()
     annotation.load(annotation_name)
 
-    cap = cv2.VideoCapture(str(video_name))
+    if video_name == ".":
+        video_name = annotation.videofilename
 
+    cap = cv2.VideoCapture(video_name)
+        
     images_list = []
+    delay = 1
     while True:
         frame_number = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
         current_annotation = annotation.get_frame_poses(frame_number)
@@ -73,7 +66,7 @@ if __name__ == '__main__':
             lxywhn = xywhn.tolist()
             lxywhn.insert(0,track_label)
             frame_annotations.append(lxywhn)
-            annotator.box_label((pos.x1, pos.y1, pos.x2, pos.y2), f"{track_label}", color=colors(0, True))
+            annotator.box_label((pos.x1, pos.y1, pos.x2, pos.y2), f"{track_label}_{pos.track.id}", color=colors(0, True))
 
         if len(current_annotation) > 0:
             anntxt = f'{labels_path}/{frame_number}.txt'
@@ -85,7 +78,10 @@ if __name__ == '__main__':
 
         if opt.show:
             cv2.imshow('frame', frame)
-            if cv2.waitKey(1) == 27:
+            key = cv2.waitKey(delay)
+            if key == 32:
+                delay = 1 - delay
+            elif key == 27:
                 break
         
     nfold = 5

@@ -9,5 +9,6 @@
     "conf": 0.01,
     "iou": 0.05,
     "capture_conf": 0.1,
-    "wait_frames": 10
+    "wait_frames": 10,
+    "min_track_length": 2
 }

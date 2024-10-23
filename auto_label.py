@@ -49,24 +49,14 @@ class Track:
         self.frames = [frame]
         self.label = label
         self.active = True
-        self.iou_sum = 0
-        self.ious = [0]
 
-    def add(self, box, frame, iou):
+    def add(self, box, frame):
         if self.frames[-1] != frame:
             self.boxes.append(box)
             self.frames.append(frame)
-            self.ious.append(iou)
-            self.iou_sum += iou
 
     def frame_boxes(self):
-        return zip(self.frames, self.boxes, self.ious)
-    
-    def get_mean_iou(self):
-        mean = self.iou_sum / len(self.frames)
-        #if len(self.frames) > 1:
-        #    print(self.iou_sum, len(self.frames))
-        return mean
+        return zip(self.frames, self.boxes)
 
 class TrackStore:
     def __init__(self, width, height):
@@ -77,8 +67,8 @@ class TrackStore:
     def add_track(self, box, label, frame):
         self.tracks.append(Track(box, label, frame))
 
-    def add_box_to_track(self, n, box, frame, iou):
-        self.tracks[n].add(box, frame, iou)
+    def add_box_to_track(self, n, box, frame):
+        self.tracks[n].add(box, frame)
 
     def add_best_boxes_to_tracks(self, boxes_xyxy, frame):
         iou_matrix = self.track_boxes_iou_matrix(boxes_xyxy)
@@ -106,7 +96,7 @@ class TrackStore:
             if run:
                 track_enable[best_track_number] = False
                 box_enable[best_box_id] = False
-                self.add_box_to_track(track_ids_[best_track_number], boxes_xyxy[best_box_id], frame, max_iou)
+                self.add_box_to_track(track_ids_[best_track_number], boxes_xyxy[best_box_id], frame)
                 #print(best_box_id, track_ids_[best_track_number], max_iou)
         return [n for n, enable_flag in enumerate(box_enable) if enable_flag]
 
@@ -133,30 +123,28 @@ class TrackStore:
                 if(frame - track.frames[-1] > wait_frames):
                     track.active = False
 
-    def dump(self, xml_file_name):
+    def dump(self, xml_file_name, video_name):
         if len(self.tracks) == 0:
             return False
         
         root = ET.fromstring("<annotations></annotations>\n")
         tree = ET.ElementTree(element=root)
-        root.append(ET.fromstring(f"<meta><task><original_size><width>{self.width}</width><height>{self.height}</height></original_size></task></meta>"))
+        root.append(ET.fromstring(f"<meta><task><original_size><width>{self.width}</width><height>{self.height}</height></original_size><source>{video_name}</source></task></meta>"))
         for id, track in enumerate(self.tracks):
-            if track.get_mean_iou() > 0.7:
-                continue
-
             track_node = ET.Element("track", attrib={"id": str(id), "label": str(track.label), "source": "semi-auto"}) 
-            last_index = len(track.boxes)
-            for index, (frame, box, iou) in enumerate(track.frame_boxes()):
+            track_length = len(track.boxes)
+            if track_length < min_track_length:
+                continue
+            for index, (frame, box) in enumerate(track.frame_boxes()):
                 box = box.numpy()
                 track_node.append(ET.Element("box", attrib={"frame" : str(frame)
                                                         ,"keyframe" : "1"
-                                                        ,"outside"  : str(int(index == last_index-1))
+                                                        ,"outside"  : str(int(index == track_length-1))
                                                         ,"occluded" : "0"
                                                         ,"xtl" : str(box[0])
                                                         ,"ytl" : str(box[1])
                                                         ,"xbr" : str(box[2])
                                                         ,"ybr" : str(box[3])
-                                                        ,"iou" : str(iou) 
                                                         ,"z_order" : "0"}))
             root.append(track_node)
         tree.write(xml_file_name)        
@@ -164,10 +152,11 @@ class TrackStore:
 
 def process_video_xml(video_item):
     xml_file_name = video_item.format(VideoArchive="")[1:].replace("/","_").replace(".","_") + ".xml"
+    video_name = video_item.format(VideoArchive=str(video_archive_root))
     model = YOLO(yolo_nn_name)
     print('filename: ' + video_item.format(VideoArchive=str(video_archive_root)))
     #results = model.track(source=video_item.format(VideoArchive=str(video_archive_root)), stream=True, show=False, persist=True, conf=conf, iou=iou)
-    results = model.predict(source=video_item.format(VideoArchive=str(video_archive_root)), stream=True, show=False, conf=0.1, iou=0.01, verbose=False)
+    results = model.predict(source=video_name, stream=True, show=False, conf=0.1, iou=0.01, verbose=False)
     trackstore = None
     for frame_number,result in enumerate(results):
         if trackstore is None:
@@ -192,7 +181,7 @@ def process_video_xml(video_item):
         #    break
 
     print("done: ", root_dataset_folder / xml_file_name)
-    if trackstore.dump(root_dataset_folder / xml_file_name):
+    if trackstore.dump(root_dataset_folder / xml_file_name, video_name):
         return str(root_dataset_folder / xml_file_name)
     else:
         return ""
@@ -212,6 +201,7 @@ if __name__ == "__main__":
     parser.add_argument('--iou', nargs='?', help='iou nms')
     parser.add_argument('--label_names_yaml', nargs='?', help='yaml file with label names')
     parser.add_argument('--wait_frames', nargs='?', help='number of frames before delete track')
+    parser.add_argument('--min_track_length', nargs='?', help='minimal length of track')
     opt = parser.parse_args()
 
     if opt.__dict__['settings'] is not None:
@@ -238,6 +228,7 @@ if __name__ == "__main__":
     iou = float(settings['iou'])
     label_names_yaml = settings['label_names_yaml']
     wait_frames = settings['wait_frames']
+    min_track_length = settings['min_track_length']
 
     with open(video_list_yaml) as video_list_file:
         supervisor_scenario = yaml.safe_load(video_list_file)

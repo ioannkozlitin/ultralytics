@@ -104,6 +104,7 @@ class Pos:
 class Annotation:
     def __init__(self):
         self.filename = None
+        self.videofilename = None
         self.tracks = dict()  # track id : track
         self.frame_poses = list()  # frame_no -> set(Pos)
         self.labels = dict()
@@ -147,6 +148,8 @@ class Annotation:
             self.original_width = int(el.text)
         for el in ann_node.findall('./meta/task/original_size/height'):
             self.original_height = int(el.text)
+        for el in ann_node.findall('./meta/task/source'):
+            self.videofilename = el.text
         for el in ann_node.findall('./meta/idealfile'):
             self.idealfile = el.text
         #
