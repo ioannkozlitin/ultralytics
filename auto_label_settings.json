@@ -1,7 +1,7 @@
 {
-    "video_list_yaml": "/home/neuron-2/Видео/prepare/list.yaml",
-    "root_dataset_folder": "/home/neuron-2/Видео/prepare/annotation_new3",
-    "video_archive_root": "/home/neuron-2/Видео/prepare",
+    "video_list_yaml": "/home/neuron-2/Видео/list.yaml",
+    "root_dataset_folder": "/home/neuron-2/Видео/annflyboat",
+    "video_archive_root": "/home/neuron-2/Видео",
     "image_width": 640,
     "workers_number": 8,
     "yolo_nn_name": "boat_24.pt",
