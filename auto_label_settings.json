@@ -1,6 +1,6 @@
 {
-    "video_list_yaml": "/home/neuron-2/Видео/prepare/testlist0.yaml",
-    "root_dataset_folder": "/home/neuron-2/Видео/prepare/annotation_test",
+    "video_list_yaml": "/home/neuron-2/Видео/prepare/list.yaml",
+    "root_dataset_folder": "/home/neuron-2/Видео/prepare/annotation_new3",
     "video_archive_root": "/home/neuron-2/Видео/prepare",
     "image_width": 640,
     "workers_number": 8,
