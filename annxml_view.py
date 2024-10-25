@@ -10,15 +10,15 @@ import argparse
 import os
 
 mouseX = mouseY = 0
-clkflag = False
-dblclkflag = False
+lclkflag = False
+mclkflag = False
 
 def mouse_event1(event,x,y,flags,param):
-    global mouseX,mouseY,clkflag,dblclkflag
+    global mouseX,mouseY,lclkflag,mclkflag
     if event == cv2.EVENT_LBUTTONUP:
-        clkflag = True
-    if event == cv2.EVENT_LBUTTONDBLCLK:
-        dblclkflag = True
+        lclkflag = True
+    if event == cv2.EVENT_MBUTTONUP:
+        mclkflag = True
     mouseX,mouseY = x,y
 
 if __name__ == '__main__':
@@ -45,6 +45,7 @@ if __name__ == '__main__':
     frame_number = 0
     strobsize = 128
     selected_tracks = set()
+    handle_select = False
     while True:
         if (direction < 0) and (frame_number > 0):
             cap.set(cv2.CAP_PROP_POS_FRAMES, frame_number - 1)
@@ -78,21 +79,23 @@ if __name__ == '__main__':
             color = (0,0,255) if pos.track.id in selected_tracks else (255,0,0)
             annotator.box_label((pos.x1, pos.y1, pos.x2, pos.y2), f"{track_label}_{pos.track.id}", color=color)
 
-        if clkflag:
+        if lclkflag or handle_select:
             for track_id in tracks_to_process:
                 selected_tracks.add(track_id)
             if len(tracks_to_process):
-                clkflag = False
+                lclkflag = False
 
-        if dblclkflag:
+        if mclkflag:
             for track_id in tracks_to_process:
                 if track_id in selected_tracks:
                     selected_tracks.remove(track_id)
             if len(tracks_to_process):
-                dblclkflag = False
+                mclkflag = False
 
         cv2.putText(frame, f'{frame_number} / {delay}', (10,50), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, thickness=2, color = (0,0,0))
         cv2.rectangle(frame, strobe[0:2], strobe[2:4], thickness=2, color=(0,0,255))
+        if handle_select:
+            cv2.putText(frame, f'H', (strobe[2]+5,strobe[1]-5), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, thickness=2, color = (0,0,255))
         cv2.imshow('frame', frame)
 
         key = cv2.waitKey(abs(delay * direction))
@@ -111,6 +114,8 @@ if __name__ == '__main__':
             strobsize = min(strobsize * 2, min(frame.shape[:-1]))
         elif key == 86:
             strobsize = max(strobsize // 2, 16)
+        elif key == ord('h') or key == ord('H'):
+            handle_select = not handle_select
         elif key == 27:
             break
         
