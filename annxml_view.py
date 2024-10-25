@@ -23,12 +23,18 @@ def mouse_event1(event,x,y,flags,param):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('annotation_name', nargs=1, help='video file name')
+    parser.add_argument('annotation_name', nargs=1, help='annotation file name')
     parser.add_argument('--video_name', help='video file name', default='')
+    parser.add_argument('--annotation_folder', help='save annotations folder', default='')
     opt = parser.parse_args()
 
     annotation_name = Path(os.path.expanduser(opt.annotation_name[0]))
     video_name = str(Path(os.path.expanduser(opt.video_name)))
+    annotation_folder = Path(os.path.expanduser(opt.annotation_folder))
+    if str(annotation_folder) == ".":
+        save_annotation_name = annotation_name.name
+    else:
+        save_annotation_name = annotation_name.parents[0] / annotation_folder / annotation_name.name
 
     annotation = Annotation()
     annotation.load(annotation_name)
@@ -116,8 +122,12 @@ if __name__ == '__main__':
             strobsize = max(strobsize // 2, 16)
         elif key == ord('h') or key == ord('H'):
             handle_select = not handle_select
+        elif key == ord('s') or key == ord('S'):
+            annotation.dump(save_annotation_name, selected_ids=selected_tracks)
         elif key == 27:
             break
         
     cap.release()
     cv2.destroyAllWindows()
+    annotation.dump(save_annotation_name, selected_ids=selected_tracks)
+

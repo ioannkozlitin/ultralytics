@@ -207,3 +207,30 @@ class Annotation:
                 else:
                     y = max(15*y_scale, (pos.y1 * y_scale - 5*y_scale))
                 cv2.putText(image, f"{pos.track.id} {pos.track.label}", (round(pos.x1*x_scale), round(y)), font, fontScale=font_scale/image_scale, color=color, thickness=1*annotation_scale)
+
+    def dump(self, xml_file_name, selected_ids = None):
+        if len(self.tracks) == 0:
+            return False
+        
+        root = ET.fromstring("<annotations></annotations>\n")
+        tree = ET.ElementTree(element=root)
+        root.append(ET.fromstring(f"<meta><task><original_size><width>{self.original_width}</width><height>{self.original_height}</height></original_size><source>{self.videofilename}</source></task></meta>"))
+        for id, track in self.tracks.items():
+            if selected_ids is not None:
+                if id not in selected_ids:
+                    continue
+            #print(track)
+            track_node = ET.Element("track", attrib={"id": str(id), "label": str(track.label), "source": "semi-auto"}) 
+            for index, pos in enumerate(track.frames):
+                track_node.append(ET.Element("box", attrib={"frame" : str(pos.frame_no)
+                                                        ,"keyframe" : str(int(pos.is_keyframe))
+                                                        ,"outside"  : str(int(pos.is_outside))
+                                                        ,"occluded" : str(int(pos.is_occluded))
+                                                        ,"xtl" : str(pos.x1)
+                                                        ,"ytl" : str(pos.y1)
+                                                        ,"xbr" : str(pos.x2)
+                                                        ,"ybr" : str(pos.y2)
+                                                        ,"z_order" : "0"}))
+            root.append(track_node)
+        tree.write(xml_file_name)        
+        return True
