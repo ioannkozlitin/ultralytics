@@ -4,6 +4,9 @@ import argparse
 import os
 from pathlib import Path
 import subprocess
+from shutil import rmtree
+from annotation import Annotation
+import cv2
 
 def update_lists():
     global videolist, processed_list, videolist_listbox_fullnames
@@ -40,7 +43,25 @@ def view_video():
         subprocess.run(["python3", "annxml_view.py", processed_list[selection[0]]])
 
 def generate_images():
-    pass
+    root_images_path = Path(dataset_folder_entry.get()) / "images"
+    for item in videolist:
+        print(item)
+        annotation = Annotation()
+        annotation.load(item)
+        cap = cv2.VideoCapture(annotation.videofilename)
+        images_path = root_images_path / Path(item).stem
+        rmtree(images_path, ignore_errors=True)
+        images_path.mkdir(parents=True, exist_ok=True)
+        #images_list = []
+        while True:
+            frame_number = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
+            ret, frame = cap.read()
+            if not ret:
+                break
+            
+            framejpg = f'{images_path}/{frame_number}.jpg'
+            cv2.imwrite(framejpg, frame)
+            #images_list.append(f"./images/{frame_number}.jpg")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
