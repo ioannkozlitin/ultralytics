@@ -129,5 +129,6 @@ if __name__ == '__main__':
         
     cap.release()
     cv2.destroyAllWindows()
-    annotation.dump(save_annotation_name, selected_ids=selected_tracks)
+    if str(annotation_folder) != ".":
+        annotation.dump(save_annotation_name, selected_ids=selected_tracks)
 
