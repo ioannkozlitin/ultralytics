@@ -63,7 +63,6 @@ def process_video(item):
     print(item, ' processed')
 
 def generate_images():
-    workers_number = 8
     with multiprocessing.Pool(workers_number) as pool:
             pool.map(process_video, videolist)
 
@@ -75,7 +74,6 @@ if __name__ == "__main__":
     opt = parser.parse_args()
 
     workers_number = opt.workers_number
-    print(workers_number)
 
     root = Tk()
     root.geometry("830x330")
