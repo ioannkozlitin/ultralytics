@@ -8,6 +8,9 @@ from shutil import rmtree
 from annotation import Annotation
 import multiprocessing
 import cv2
+from ultralytics.utils.ops import xyxy2xywhn
+import numpy as np
+import yaml
 
 def update_lists():
     global videolist, processed_list, videolist_listbox_fullnames
@@ -62,18 +65,78 @@ def process_video(item):
         cv2.imwrite(framejpg, frame)
     print(item, ' processed')
 
+def process_annotation(item):
+    print('Process ', item)
+
+    labels_path = Path(dataset_folder_entry.get()) / "labels" / Path(item).stem
+    images_path = Path(dataset_folder_entry.get()) / "images" / Path(item).stem
+
+    rmtree(labels_path, ignore_errors=True)
+    labels_path.mkdir(parents=True, exist_ok=True)
+
+    annotation = Annotation()
+    annotation.load(item)
+    images = []
+    for frame_number, frame_pos in enumerate(annotation.frame_poses):
+        frame_annotations=list()
+        for pos in frame_pos:
+            if pos.is_outside:
+                continue
+            xywhn = xyxy2xywhn(np.array([pos.x1, pos.y1, pos.x2, pos.y2]), w = annotation.original_width, h = annotation.original_height)
+            if len(annotation.labels):
+                track_label = annotation.labels[pos.track.label]
+            else:
+                track_label = inv_label_names[pos.track.label]
+            lxywhn = xywhn.tolist()
+            lxywhn.insert(0,track_label)
+            frame_annotations.append(lxywhn)
+            
+        if len(annotation.frame_poses):
+            anntxt = f'{labels_path}/{frame_number}.txt'
+            image_name = f'{images_path}/{frame_number}.jpg'
+            images.append(image_name)
+            with open(anntxt,"wt") as f:
+                for ann_item in frame_annotations:
+                    for el in ann_item:
+                        print(el, file=f, end=' ')
+                    print(file=f)
+
+    print(item, ' processed')
+    return images
+
 def generate_images():
     with multiprocessing.Pool(workers_number) as pool:
             pool.map(process_video, videolist)
+
+def generate_labels():
+    all_images = []
+    with multiprocessing.Pool(workers_number) as pool:
+            all_images.append(pool.map(process_annotation, processed_list))
+    
+    all_images = [item for image_item in all_images for item in image_item]
+    print(all_images)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('annotation_folder', nargs=1, help='annotation folder name')
     parser.add_argument('processed_subfolder', nargs=1, help='processed annotation subfolder name')
     parser.add_argument('--workers_number', nargs='?', help='maximum number of processes', type=int, default=8)
+    parser.add_argument('--label_names_yaml', nargs='?', help='yaml file with label names', default='')
     opt = parser.parse_args()
 
     workers_number = opt.workers_number
+    if Path(opt.label_names_yaml).is_file():
+        with open(opt.label_names_yaml) as f:
+            label_names = yaml.safe_load(f)
+    else:
+        label_names = None
+
+    if label_names is None:
+        inv_label_names = None
+    else:
+        inv_label_names = {value : key for key,value in label_names.items()}
+
+    print(inv_label_names)
 
     root = Tk()
     root.geometry("830x330")
@@ -102,5 +165,5 @@ if __name__ == "__main__":
     dataset_folder_entry.grid(row=2, column=0, padx=5, pady=5, sticky=E)
 
     ttk.Button(text="Generate images", command=generate_images).grid(row=3, column=0, padx=5, pady=5, sticky=W)
-    #ttk.Button(text="Generate labels", command=generate_images).grid(row=3, column=0, padx=130, pady=5, sticky=W)
+    ttk.Button(text="Generate labels", command=generate_labels).grid(row=3, column=0, padx=130, pady=5, sticky=W)
     root.mainloop()
