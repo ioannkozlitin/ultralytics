@@ -11,6 +11,7 @@ import cv2
 from ultralytics.utils.ops import xyxy2xywhn
 import numpy as np
 import yaml
+import random
 
 def update_lists():
     global videolist, processed_list, videolist_listbox_fullnames
@@ -46,7 +47,7 @@ def view_video():
         print(processed_list[selection[0]])
         subprocess.run(["python3", "annxml_view.py", processed_list[selection[0]]])
 
-def process_video(item):
+def process_video_item(item):
     print('Process ', item)
     annotation = Annotation()
     annotation.load(item)
@@ -101,20 +102,31 @@ def process_annotation(item):
                         print(el, file=f, end=' ')
                     print(file=f)
 
-    print(item, ' processed')
+    print(item, f' processed images: {len(images)}')
     return images
 
 def generate_images():
     with multiprocessing.Pool(workers_number) as pool:
-            pool.map(process_video, videolist)
+            pool.map(process_video_item, videolist)
 
 def generate_labels():
-    all_images = []
     with multiprocessing.Pool(workers_number) as pool:
-            all_images.append(pool.map(process_annotation, processed_list))
+        all_images = pool.map(process_annotation, processed_list)
     
     all_images = [item for image_item in all_images for item in image_item]
-    print(all_images)
+
+    nfold = 5
+    k = 2
+    ftr = open( Path(dataset_folder_entry.get()) / "train.txt", 'w' )
+    fte = open( Path(dataset_folder_entry.get()) / "validation.txt", 'w' )
+    for image_name in all_images:
+        if random.randint( 1 , nfold ) == k:
+            print(image_name, file=fte)
+        else:
+            print(image_name, file=ftr)
+    
+    ftr.close()
+    fte.close()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
