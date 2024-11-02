@@ -128,12 +128,23 @@ def generate_labels():
     ftr.close()
     fte.close()
 
+def search_sources():
+    sourcelist = [str(item.relative_to(source_folder)) for item in source_folder.glob(search_pattern_entry.get())]
+    source_listbox.delete(0,source_listbox.size()-1)
+    for item in sourcelist:
+        source_listbox.insert(END, item)
+    
+    sourcelist_yaml = {"videofiles": ["{VideoArchive}/"+item for item in sourcelist]}
+    with open("videolist.yaml","w") as f:
+        yaml.dump(sourcelist_yaml, f, allow_unicode=True)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('annotation_folder', nargs=1, help='annotation folder name')
     parser.add_argument('processed_subfolder', nargs=1, help='processed annotation subfolder name')
     parser.add_argument('--workers_number', nargs='?', help='maximum number of processes', type=int, default=8)
     parser.add_argument('--label_names_yaml', nargs='?', help='yaml file with label names', default='')
+    parser.add_argument('--source_folder', nargs='?', help='source folder name', default='')
     opt = parser.parse_args()
 
     workers_number = opt.workers_number
@@ -151,7 +162,7 @@ if __name__ == "__main__":
     print(inv_label_names)
 
     root = Tk()
-    root.geometry("830x330")
+    root.geometry("830x600")
     root.resizable(False, False)
 
     videolist_listbox = Listbox(width = 50)
@@ -160,6 +171,7 @@ if __name__ == "__main__":
     processed_listbox.grid(row=1, column=1, sticky=EW, padx=5, pady=5)
     
     annotation_folder = Path(os.path.expanduser(opt.annotation_folder[0]))
+    source_folder = Path(os.path.expanduser(opt.source_folder))
 
     processed_subfolder = annotation_folder / opt.processed_subfolder[0]
 
@@ -178,4 +190,19 @@ if __name__ == "__main__":
 
     ttk.Button(text="Generate images", command=generate_images).grid(row=3, column=0, padx=5, pady=5, sticky=W)
     ttk.Button(text="Generate labels", command=generate_labels).grid(row=3, column=0, padx=130, pady=5, sticky=W)
+
+    source_folder_entry = ttk.Entry(width=35)
+    source_folder_entry.insert(0, source_folder)
+    source_folder_entry.grid(row=2, column=1, padx=5, pady=5, sticky=E)
+    ttk.Label(text = "Source folder").grid(row=2, column=1, padx=5, pady=5, sticky=W)
+
+    search_pattern_entry = ttk.Entry(width=35)
+    search_pattern_entry.insert(0, "**/*.mp4")
+    search_pattern_entry.grid(row=3, column=1, padx=5, pady=5, sticky=E)
+    ttk.Label(text = "Search pattern").grid(row=3, column=1, padx=5, pady=5, sticky=W)
+
+    source_listbox = Listbox(width = 50)
+    source_listbox.grid(row=4, column=1, sticky=EW, padx=5, pady=5)
+
+    ttk.Button(text="Search", command=search_sources).grid(row=5, column=1, padx=5, pady=5, sticky=W)
     root.mainloop()
