@@ -11,6 +11,7 @@ import cv2
 from ultralytics.utils.ops import xyxy2xywhn
 import numpy as np
 import yaml
+import json
 import random
 
 def update_lists():
@@ -129,14 +130,44 @@ def generate_labels():
     fte.close()
 
 def search_sources():
+    source_folder = Path(source_folder_entry.get())
     sourcelist = [str(item.relative_to(source_folder)) for item in source_folder.glob(search_pattern_entry.get())]
     source_listbox.delete(0,source_listbox.size()-1)
     for item in sourcelist:
         source_listbox.insert(END, item)
-    
-    sourcelist_yaml = {"videofiles": ["{VideoArchive}/"+item for item in sourcelist]}
+
+def run_auto_label():
+    source_list = selected_listbox.get(0, selected_listbox.size()-1)
+    sourcelist_yaml = {"videofiles": ["{VideoArchive}/"+item for item in source_list]}
     with open("videolist.yaml","w") as f:
         yaml.dump(sourcelist_yaml, f, allow_unicode=True)
+
+    with open("ann_manager_settings.json") as f:
+        settings = json.load(f)
+
+    settings["video_list_yaml"] = "videolist.yaml"
+    settings["root_dataset_folder"] = str(annotation_folder)
+    settings["video_archive_root"] = str(source_folder)
+
+    with open("auto_label_settings_.json","w") as f:
+        settings = json.dump(settings, f, indent=4, ensure_ascii=False)
+    subprocess.run(["python3", "auto_label.py", "--settings", "auto_label_settings_.json", "--xml_output"])
+    update_lists()
+
+def select_video():
+    curselection = source_listbox.curselection()
+    if len(curselection):
+        selection = source_listbox.get(curselection)
+        selected_data = selected_listbox.get(0, selected_listbox.size()-1)
+        if selection not in selected_data:
+            selected_listbox.insert(END, selection)
+
+def select_all_video():
+    source_list = source_listbox.get(0, source_listbox.size()-1)
+    selected_data = selected_listbox.get(0, selected_listbox.size()-1)
+    for selection in source_list:
+        if selection not in selected_data:
+            selected_listbox.insert(END, selection)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -204,5 +235,11 @@ if __name__ == "__main__":
     source_listbox = Listbox(width = 50)
     source_listbox.grid(row=4, column=1, sticky=EW, padx=5, pady=5)
 
+    selected_listbox = Listbox(width = 50)
+    selected_listbox.grid(row=4, column=0, sticky=EW, padx=5, pady=5)
+
     ttk.Button(text="Search", command=search_sources).grid(row=5, column=1, padx=5, pady=5, sticky=W)
+    ttk.Button(text="Select", command=select_video).grid(row=5, column=1, padx=95, pady=5, sticky=W)
+    ttk.Button(text="Select all", command=select_all_video).grid(row=5, column=1, padx=185, pady=5, sticky=W)
+    ttk.Button(text="Autolabel", command=run_auto_label).grid(row=5, column=0, padx=5, pady=5, sticky=W)
     root.mainloop()
