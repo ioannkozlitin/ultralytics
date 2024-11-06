@@ -13,6 +13,7 @@ import numpy as np
 import yaml
 import json
 import random
+import cv2
 
 def update_lists():
     global videolist, processed_list, videolist_listbox_fullnames
@@ -169,6 +170,33 @@ def select_all_video():
         if selection not in selected_data:
             selected_listbox.insert(END, selection)
 
+def remove_item():
+    curselection = selected_listbox.curselection()
+    selected_listbox.delete(curselection)
+
+def remove_all_items():
+    selected_listbox.delete(0, selected_listbox.size()-1)
+
+def video_preview():
+    curselection = selected_listbox.curselection()
+    video_name = selected_listbox.get(curselection)
+    #print(video_name)
+    cap = cv2.VideoCapture(source_folder / video_name)
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+            continue
+        
+        cv2.imshow('frame', frame)
+        key = cv2.waitKey(1)
+        if key == 27:
+            break
+    
+    cap.release()
+    cv2.destroyAllWindows()
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('annotation_folder', nargs=1, help='annotation folder name')
@@ -242,4 +270,7 @@ if __name__ == "__main__":
     ttk.Button(text="Select", command=select_video).grid(row=5, column=1, padx=95, pady=5, sticky=W)
     ttk.Button(text="Select all", command=select_all_video).grid(row=5, column=1, padx=185, pady=5, sticky=W)
     ttk.Button(text="Autolabel", command=run_auto_label).grid(row=5, column=0, padx=5, pady=5, sticky=W)
+    ttk.Button(text="Remove", command=remove_item).grid(row=5, column=0, padx=95, pady=5, sticky=W)
+    ttk.Button(text="Remove all", command=remove_all_items).grid(row=5, column=0, padx=185, pady=5, sticky=W)
+    ttk.Button(text="Preview", command=video_preview).grid(row=5, column=0, padx=5, pady=5, sticky=E)
     root.mainloop()
