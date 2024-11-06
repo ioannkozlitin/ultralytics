@@ -16,21 +16,19 @@ import random
 import cv2
 
 def update_lists():
-    global videolist, processed_list, videolist_listbox_fullnames
+    global videolist, processed_list
     videolist = [str(item) for item in annotation_folder.glob("**/*.xml")]
     processed_list = [str(item) for item in processed_subfolder.glob("**/*.xml")]
 
     videolist.sort()
     processed_list.sort()
 
-    processed_list_names = [str(Path(item).name) for item in processed_list]
+    processed_list_names = [str(Path(item).relative_to(processed_subfolder)) for item in processed_list]
     
     videolist_listbox.delete(0,videolist_listbox.size()-1)
-    videolist_listbox_fullnames = []
     for item in videolist:
-        short_item = str(Path(item).name)
+        short_item = str(Path(item).relative_to(annotation_folder))
         if short_item not in processed_list_names:
-            videolist_listbox_fullnames.append(item)
             videolist_listbox.insert(END, short_item)
 
     processed_listbox.delete(0,processed_listbox.size()-1)
@@ -40,14 +38,14 @@ def update_lists():
 def process_video():
     selection = videolist_listbox.curselection()
     if len(selection):
-        subprocess.run(["python3", "annxml_view.py", videolist_listbox_fullnames[selection[0]], "--annotation_folder", opt.processed_subfolder[0]])
+        print(videolist_listbox.get(selection))
+        subprocess.run(["python3", "annxml_view.py", annotation_folder / videolist_listbox.get(selection), "--annotation_folder", opt.processed_subfolder[0]])
         update_lists()
 
 def view_video():
     selection = processed_listbox.curselection()
     if len(selection):
-        print(processed_list[selection[0]])
-        subprocess.run(["python3", "annxml_view.py", processed_list[selection[0]]])
+        subprocess.run(["python3", "annxml_view.py", processed_subfolder / processed_listbox.get(selection)])
 
 def process_video_item(item):
     print('Process ', item)
