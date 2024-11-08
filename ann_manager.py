@@ -17,8 +17,12 @@ import cv2
 
 def update_lists():
     global videolist, processed_list
-    videolist = [str(item) for item in annotation_folder.glob("**/*.xml")]
-    processed_list = [str(item) for item in processed_subfolder.glob("**/*.xml")]
+
+    annotation_folder = Path(project_folder_entry.get()) / Path(annotation_subfolder_entry.get())
+    processed_subfolder = annotation_folder / opt.processed_subfolder
+
+    videolist = [str(item) for item in annotation_folder.glob("*.xml")]
+    processed_list = [str(item) for item in processed_subfolder.glob("*.xml")]
 
     videolist.sort()
     processed_list.sort()
@@ -37,13 +41,16 @@ def update_lists():
 
 def process_video():
     selection = videolist_listbox.curselection()
+    annotation_folder = Path(project_folder_entry.get()) / Path(annotation_subfolder_entry.get())
     if len(selection):
         print(videolist_listbox.get(selection))
-        subprocess.run(["python3", "annxml_view.py", annotation_folder / videolist_listbox.get(selection), "--annotation_folder", opt.processed_subfolder[0]])
+        subprocess.run(["python3", "annxml_view.py", annotation_folder / videolist_listbox.get(selection), "--annotation_folder", opt.processed_subfolder])
         update_lists()
 
 def view_video():
     selection = processed_listbox.curselection()
+    annotation_folder = Path(project_folder_entry.get()) / Path(annotation_subfolder_entry.get())
+    processed_subfolder = annotation_folder / opt.processed_subfolder
     if len(selection):
         subprocess.run(["python3", "annxml_view.py", processed_subfolder / processed_listbox.get(selection)])
 
@@ -52,7 +59,7 @@ def process_video_item(item):
     annotation = Annotation()
     annotation.load(item)
     cap = cv2.VideoCapture(annotation.videofilename)
-    root_images_path = Path(dataset_folder_entry.get()) / "images"
+    root_images_path = Path(project_folder_entry.get()) / "images"
     images_path = root_images_path / Path(item).stem
     rmtree(images_path, ignore_errors=True)
     images_path.mkdir(parents=True, exist_ok=True)
@@ -69,8 +76,8 @@ def process_video_item(item):
 def process_annotation(item):
     print('Process ', item)
 
-    labels_path = Path(dataset_folder_entry.get()) / "labels" / Path(item).stem
-    images_path = Path(dataset_folder_entry.get()) / "images" / Path(item).stem
+    labels_path = Path(project_folder_entry.get()) / "labels" / Path(item).stem
+    images_path = Path(project_folder_entry.get()) / "images" / Path(item).stem
 
     rmtree(labels_path, ignore_errors=True)
     labels_path.mkdir(parents=True, exist_ok=True)
@@ -117,8 +124,8 @@ def generate_labels():
 
     nfold = 5
     k = 2
-    ftr = open( Path(dataset_folder_entry.get()) / "train.txt", 'w' )
-    fte = open( Path(dataset_folder_entry.get()) / "validation.txt", 'w' )
+    ftr = open( Path(project_folder_entry.get()) / "train.txt", 'w' )
+    fte = open( Path(project_folder_entry.get()) / "validation.txt", 'w' )
     for image_name in all_images:
         if random.randint( 1 , nfold ) == k:
             print(image_name, file=fte)
@@ -143,6 +150,8 @@ def run_auto_label():
 
     with open("ann_manager_settings.json") as f:
         settings = json.load(f)
+        
+    annotation_folder = Path(project_folder_entry.get()) / Path(annotation_subfolder_entry.get())
 
     settings["video_list_yaml"] = "videolist.yaml"
     settings["root_dataset_folder"] = str(annotation_folder)
@@ -197,8 +206,8 @@ def video_preview():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('annotation_folder', nargs=1, help='annotation folder name')
-    parser.add_argument('processed_subfolder', nargs=1, help='processed annotation subfolder name')
+    parser.add_argument('project_folder', nargs=1, help='project folder name')
+    parser.add_argument('--processed_subfolder', nargs='?', help='processed annotation subfolder name', default='new')
     parser.add_argument('--workers_number', nargs='?', help='maximum number of processes', type=int, default=8)
     parser.add_argument('--label_names_yaml', nargs='?', help='yaml file with label names', default='')
     parser.add_argument('--source_folder', nargs='?', help='source folder name', default='')
@@ -219,7 +228,7 @@ if __name__ == "__main__":
     print(inv_label_names)
 
     root = Tk()
-    root.geometry("830x600")
+    root.geometry("910x600")
     root.resizable(False, False)
 
     videolist_listbox = Listbox(width = 50)
@@ -227,23 +236,24 @@ if __name__ == "__main__":
     videolist_listbox.grid(row=1, column=0, sticky=EW, padx=5, pady=5)
     processed_listbox.grid(row=1, column=1, sticky=EW, padx=5, pady=5)
     
-    annotation_folder = Path(os.path.expanduser(opt.annotation_folder[0]))
     source_folder = Path(os.path.expanduser(opt.source_folder))
-
-    processed_subfolder = annotation_folder / opt.processed_subfolder[0]
 
     videolist=[]
     processed_list=[]
     videolist_listbox_fullnames=[]
-    update_lists()
 
-    ttk.Button(text="Process", command=process_video).grid(row=0, column=0, padx=5, pady=5)
+    ttk.Button(text="Process", command=process_video).grid(row=0, column=0, padx=5, pady=5, sticky=E)
+    ttk.Label(text="Annotation subfolder").grid(row=0, column=0, padx=5, pady=5, sticky=W)
+    annotation_subfolder_entry = ttk.Entry(width=10)
+    annotation_subfolder_entry.insert(0, "0")
+    annotation_subfolder_entry.grid(row=0, column=0, padx=150, pady=5, sticky=W)
+
     ttk.Button(text="View", command=view_video).grid(row=0, column=1, padx=5, pady=5)
-    ttk.Label(text = "Dataset folder").grid(row=2, column=0, padx=5, pady=5, sticky=W)
+    ttk.Label(text = "Project folder").grid(row=2, column=0, padx=5, pady=5, sticky=W)
 
-    dataset_folder_entry = ttk.Entry(width=35)
-    dataset_folder_entry.insert(0, annotation_folder)
-    dataset_folder_entry.grid(row=2, column=0, padx=5, pady=5, sticky=E)
+    project_folder_entry = ttk.Entry(width=35)
+    project_folder_entry.insert(0, os.path.expanduser(opt.project_folder[0]))
+    project_folder_entry.grid(row=2, column=0, padx=5, pady=5, sticky=E)
 
     ttk.Button(text="Generate images", command=generate_images).grid(row=3, column=0, padx=5, pady=5, sticky=W)
     ttk.Button(text="Generate labels", command=generate_labels).grid(row=3, column=0, padx=130, pady=5, sticky=W)
@@ -264,11 +274,18 @@ if __name__ == "__main__":
     selected_listbox = Listbox(width = 50)
     selected_listbox.grid(row=4, column=0, sticky=EW, padx=5, pady=5)
 
-    ttk.Button(text="Search", command=search_sources).grid(row=5, column=1, padx=5, pady=5, sticky=W)
-    ttk.Button(text="Select", command=select_video).grid(row=5, column=1, padx=95, pady=5, sticky=W)
-    ttk.Button(text="Select all", command=select_all_video).grid(row=5, column=1, padx=185, pady=5, sticky=W)
+    ttk.Button(text="Select", command=select_video).grid(row=5, column=1, padx=5, pady=5, sticky=W)
+    ttk.Button(text="Select all", command=select_all_video).grid(row=5, column=1, padx=95, pady=5, sticky=W)
     ttk.Button(text="Autolabel", command=run_auto_label).grid(row=5, column=0, padx=5, pady=5, sticky=W)
     ttk.Button(text="Remove", command=remove_item).grid(row=5, column=0, padx=95, pady=5, sticky=W)
     ttk.Button(text="Remove all", command=remove_all_items).grid(row=5, column=0, padx=185, pady=5, sticky=W)
     ttk.Button(text="Preview", command=video_preview).grid(row=5, column=0, padx=5, pady=5, sticky=E)
+
+    search_pattern_entry.bind('<Return>', lambda event : search_sources())
+    source_folder_entry.bind('<Return>', lambda event : search_sources())
+    project_folder_entry.bind('<Return>', lambda event : update_lists())
+    
+    search_sources()
+    update_lists()
+
     root.mainloop()

@@ -181,6 +181,8 @@ def process_video_xml(video_item):
         #    break
 
     print("done: ", root_dataset_folder / xml_file_name)
+
+    root_dataset_folder.mkdir(parents=True, exist_ok=True)
     if trackstore.dump(root_dataset_folder / xml_file_name, video_name):
         return str(root_dataset_folder / xml_file_name)
     else:

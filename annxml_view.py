@@ -34,6 +34,7 @@ if __name__ == '__main__':
     if str(annotation_folder) == ".":
         save_annotation_name = annotation_name.name
     else:
+        (annotation_name.parents[0] / annotation_folder).mkdir(parents=True, exist_ok=True)
         save_annotation_name = annotation_name.parents[0] / annotation_folder / annotation_name.name
 
     annotation = Annotation()
@@ -45,6 +46,7 @@ if __name__ == '__main__':
     cap = cv2.VideoCapture(video_name)
     cv2.namedWindow('frame')
     cv2.setMouseCallback('frame',mouse_event1)
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         
     delay = 5
     direction = 1
@@ -98,7 +100,7 @@ if __name__ == '__main__':
             if len(tracks_to_process):
                 mclkflag = False
 
-        cv2.putText(frame, f'{frame_number} / {delay}', (10,50), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, thickness=2, color = (0,0,0))
+        cv2.putText(frame, f'{frame_number} / {total_frames} {delay}', (10,50), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, thickness=2, color = (0,0,0))
         cv2.rectangle(frame, strobe[0:2], strobe[2:4], thickness=2, color=(0,0,255))
         if handle_select:
             cv2.putText(frame, f'H', (strobe[2]+5,strobe[1]-5), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, thickness=2, color = (0,0,255))
