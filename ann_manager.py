@@ -204,6 +204,13 @@ def video_preview():
     cap.release()
     cv2.destroyAllWindows()
 
+def on_closing():
+    selected = {"selected" : list(selected_listbox.get(0, selected_listbox.size()-1))}
+    with open('save.yaml', 'w') as f:
+        yaml.dump(selected, f, allow_unicode=True)
+    
+    root.destroy()
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('project_folder', nargs=1, help='project folder name')
@@ -225,7 +232,14 @@ if __name__ == "__main__":
     else:
         inv_label_names = {value : key for key,value in label_names.items()}
 
-    print(inv_label_names)
+    #print(inv_label_names)
+
+    save = dict()
+    if Path('save.yaml').is_file():
+        with open('save.yaml') as f:
+            save = yaml.safe_load(f)
+
+    #print(save)
 
     root = Tk()
     root.geometry("910x600")
@@ -274,6 +288,10 @@ if __name__ == "__main__":
     selected_listbox = Listbox(width = 50)
     selected_listbox.grid(row=4, column=0, sticky=EW, padx=5, pady=5)
 
+    if 'selected' in save:
+        for item in save['selected']:
+            selected_listbox.insert(END, item)
+
     ttk.Button(text="Select", command=select_video).grid(row=5, column=1, padx=5, pady=5, sticky=W)
     ttk.Button(text="Select all", command=select_all_video).grid(row=5, column=1, padx=95, pady=5, sticky=W)
     ttk.Button(text="Autolabel", command=run_auto_label).grid(row=5, column=0, padx=5, pady=5, sticky=W)
@@ -284,8 +302,11 @@ if __name__ == "__main__":
     search_pattern_entry.bind('<Return>', lambda event : search_sources())
     source_folder_entry.bind('<Return>', lambda event : search_sources())
     project_folder_entry.bind('<Return>', lambda event : update_lists())
+    annotation_subfolder_entry.bind('<Return>', lambda event : update_lists())
     
     search_sources()
     update_lists()
 
+    root.protocol("WM_DELETE_WINDOW", on_closing)
     root.mainloop()
+
