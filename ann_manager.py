@@ -242,13 +242,13 @@ if __name__ == "__main__":
     #print(save)
 
     root = Tk()
-    root.geometry("910x600")
+    root.geometry("840x625")
     root.resizable(False, False)
 
     videolist_listbox = Listbox(width = 50)
     processed_listbox = Listbox(width = 50)
-    videolist_listbox.grid(row=1, column=0, sticky=EW, padx=5, pady=5)
-    processed_listbox.grid(row=1, column=1, sticky=EW, padx=5, pady=5)
+    videolist_listbox.grid(row=5, column=0, sticky=EW, padx=5, pady=5)
+    processed_listbox.grid(row=5, column=1, sticky=EW, padx=5, pady=5)
     
     source_folder = Path(os.path.expanduser(opt.source_folder))
 
@@ -256,48 +256,48 @@ if __name__ == "__main__":
     processed_list=[]
     videolist_listbox_fullnames=[]
 
-    ttk.Button(text="Process", command=process_video).grid(row=0, column=0, padx=5, pady=5, sticky=E)
-    ttk.Label(text="Annotation subfolder").grid(row=0, column=0, padx=5, pady=5, sticky=W)
-    annotation_subfolder_entry = ttk.Entry(width=10)
+    ttk.Button(text="Process", command=process_video).grid(row=4, column=0, padx=5, pady=5, sticky=E)
+    ttk.Label(text="Annotation subfolder").grid(row=4, column=0, padx=5, pady=5, sticky=W)
+    annotation_subfolder_entry = ttk.Entry(width=7)
     annotation_subfolder_entry.insert(0, "0")
-    annotation_subfolder_entry.grid(row=0, column=0, padx=150, pady=5, sticky=W)
-
-    ttk.Button(text="View", command=view_video).grid(row=0, column=1, padx=5, pady=5)
-    ttk.Label(text = "Project folder").grid(row=2, column=0, padx=5, pady=5, sticky=W)
-
+    annotation_subfolder_entry.grid(row=4, column=0, padx=150, pady=5, sticky=W)
+    ttk.Button(text="View", command=view_video).grid(row=4, column=1, padx=5, pady=5)
+    
+    ttk.Label(text = "Project folder").grid(row=0, column=0, padx=5, pady=5, sticky=W)
     project_folder_entry = ttk.Entry(width=35)
     project_folder_entry.insert(0, os.path.expanduser(opt.project_folder[0]))
-    project_folder_entry.grid(row=2, column=0, padx=5, pady=5, sticky=E)
+    project_folder_entry.grid(row=0, column=0, padx=5, pady=5, sticky=E)
 
-    ttk.Button(text="Generate images", command=generate_images).grid(row=3, column=0, padx=5, pady=5, sticky=W)
-    ttk.Button(text="Generate labels", command=generate_labels).grid(row=3, column=0, padx=130, pady=5, sticky=W)
+    ttk.Button(text="Generate images", command=generate_images).grid(row=6, column=0, padx=5, pady=5, sticky=W)
+    ttk.Button(text="Generate labels", command=generate_labels).grid(row=6, column=0, padx=130, pady=5, sticky=W)
 
     source_folder_entry = ttk.Entry(width=35)
     source_folder_entry.insert(0, source_folder)
-    source_folder_entry.grid(row=2, column=1, padx=5, pady=5, sticky=E)
-    ttk.Label(text = "Source folder").grid(row=2, column=1, padx=5, pady=5, sticky=W)
+    source_folder_entry.grid(row=0, column=1, padx=5, pady=5, sticky=E)
+    ttk.Label(text = "Source folder").grid(row=0, column=1, padx=5, pady=5, sticky=W)
 
     search_pattern_entry = ttk.Entry(width=35)
     search_pattern_entry.insert(0, "**/*.mp4")
-    search_pattern_entry.grid(row=3, column=1, padx=5, pady=5, sticky=E)
-    ttk.Label(text = "Search pattern").grid(row=3, column=1, padx=5, pady=5, sticky=W)
+    search_pattern_entry.grid(row=1, column=1, padx=5, pady=5, sticky=E)
+    ttk.Label(text = "Search pattern").grid(row=1, column=1, padx=5, pady=5, sticky=W)
 
     source_listbox = Listbox(width = 50)
-    source_listbox.grid(row=4, column=1, sticky=EW, padx=5, pady=5)
+    source_listbox.grid(row=3, column=1, sticky=EW, padx=5, pady=5)
 
     selected_listbox = Listbox(width = 50)
-    selected_listbox.grid(row=4, column=0, sticky=EW, padx=5, pady=5)
+    selected_listbox.grid(row=3, column=0, sticky=EW, padx=5, pady=5)
 
     if 'selected' in save:
         for item in save['selected']:
             selected_listbox.insert(END, item)
 
-    ttk.Button(text="Select", command=select_video).grid(row=5, column=1, padx=5, pady=5, sticky=W)
-    ttk.Button(text="Select all", command=select_all_video).grid(row=5, column=1, padx=95, pady=5, sticky=W)
-    ttk.Button(text="Autolabel", command=run_auto_label).grid(row=5, column=0, padx=5, pady=5, sticky=W)
-    ttk.Button(text="Remove", command=remove_item).grid(row=5, column=0, padx=95, pady=5, sticky=W)
-    ttk.Button(text="Remove all", command=remove_all_items).grid(row=5, column=0, padx=185, pady=5, sticky=W)
-    ttk.Button(text="Preview", command=video_preview).grid(row=5, column=0, padx=5, pady=5, sticky=E)
+    ttk.Button(text="Select", command=select_video).grid(row=2, column=1, padx=5, pady=5, sticky=W)
+    ttk.Button(text="Select all", command=select_all_video).grid(row=2, column=1, padx=95, pady=5, sticky=W)
+    ttk.Button(text="Autolabel", command=run_auto_label).grid(row=4, column=0, padx=95, pady=5, sticky=E)
+    
+    ttk.Button(text="Remove", command=remove_item).grid(row=2, column=0, padx=5, pady=5, sticky=W)
+    ttk.Button(text="Remove all", command=remove_all_items).grid(row=2, column=0, padx=95, pady=5, sticky=W)
+    ttk.Button(text="Preview", command=video_preview).grid(row=2, column=0, padx=5, pady=5, sticky=E)
 
     search_pattern_entry.bind('<Return>', lambda event : search_sources())
     source_folder_entry.bind('<Return>', lambda event : search_sources())
