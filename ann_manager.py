@@ -188,7 +188,7 @@ def video_preview():
     curselection = selected_listbox.curselection()
     video_name = selected_listbox.get(curselection)
     #print(video_name)
-    cap = cv2.VideoCapture(source_folder / video_name)
+    cap = cv2.VideoCapture(str(source_folder / video_name))
 
     while True:
         ret, frame = cap.read()

@@ -4,7 +4,7 @@
     "video_archive_root": "/home/neuron-2/Видео",
     "image_width": 640,
     "workers_number": 8,
-    "yolo_nn_name": "test_34.pt",
+    "yolo_nn_name": "boat_24.pt",
     "label_names_yaml": "class_names.yaml",
     "conf": 0.01,
     "iou": 0.05,
