@@ -56,6 +56,15 @@ def view_video():
     if len(selection):
         subprocess.run(["python3", "annxml_view.py", processed_subfolder / processed_listbox.get(selection)])
 
+def rm_annotation():
+    selection = processed_listbox.curselection()
+    annotation_folder = Path(project_folder_entry.get()) / Path(annotation_subfolder_entry.get())
+    processed_subfolder = annotation_folder / opt.processed_subfolder
+    if len(selection):
+        filename = processed_subfolder / processed_listbox.get(selection)
+        filename.unlink()
+        update_lists()
+
 def process_video_and_annotation_item(item):
     print('Process video and annotation ', item)
     annotation = Annotation()
@@ -286,7 +295,8 @@ if __name__ == "__main__":
     annotation_subfolder_entry = ttk.Entry(width=7)
     annotation_subfolder_entry.insert(0, "0")
     annotation_subfolder_entry.grid(row=4, column=0, padx=150, pady=5, sticky=W)
-    ttk.Button(text="View", command=view_video).grid(row=4, column=1, padx=5, pady=5)
+    ttk.Button(text="View", command=view_video).grid(row=4, column=1, padx=5, pady=5, sticky=E)
+    ttk.Button(text="Remove", command=rm_annotation).grid(row=4, column=1, padx=95, pady=5, sticky=E)
     ttk.Button(text="Autolabel", command=run_auto_label).grid(row=4, column=0, padx=95, pady=5, sticky=E)
 
     videolist_listbox = Listbox(width = 50)
