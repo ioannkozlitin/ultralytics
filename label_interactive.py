@@ -18,9 +18,13 @@ class Core:
         width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         self.canvas = Canvas(self.root, width=width+100, height=height, bg='white')
-        self.next_frame()
+        self.delay = 5
+        self.play = False
+        self.loop()
         #
         ttk.Button(text="Start", command=self.start).place(x = width + 5, y = 5)
+        ttk.Button(text="Play", command=self.fplay).place(x = width + 5, y = 35)
+        ttk.Button(text="Stop", command=self.fstop).place(x = width + 5, y = 65)
         #
         self.canvas.pack()
         self.root.mainloop()
@@ -35,11 +39,23 @@ class Core:
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR) 
             self.image = ImageTk.PhotoImage(Image.fromarray(frame))
             self.canvas.create_image(1, 1, anchor=NW, image=self.image)
-        
-        self.root.after(1, self.next_frame)
+        return ret
+    
+    def loop(self):
+        if self.play:
+            self.play = self.next_frame()
+        self.root.after(self.delay, self.loop)
 
     def start(self):
         self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+        self.fplay()
+
+    def fplay(self):
+        self.play = True
+
+
+    def fstop(self):
+        self.play = False
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
