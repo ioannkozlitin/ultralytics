@@ -156,7 +156,7 @@ def process_video_xml(video_item):
     model = YOLO(yolo_nn_name)
     print('filename: ' + video_item.format(VideoArchive=str(video_archive_root)))
     #results = model.track(source=video_item.format(VideoArchive=str(video_archive_root)), stream=True, show=False, persist=True, conf=conf, iou=iou)
-    results = model.predict(source=video_name, stream=True, show=False, conf=0.1, iou=0.01, verbose=False)
+    results = model.predict(source=video_name, stream=True, show=False, conf=conf, iou=iou, verbose=False)
     trackstore = None
     for frame_number,result in enumerate(results):
         if trackstore is None:
@@ -195,7 +195,7 @@ if __name__ == "__main__":
     parser.add_argument('--video_archive_root', nargs='?', help='root of video archive')
     parser.add_argument('--image_width', nargs='?', help='name of image_processor build', type=int)
     parser.add_argument('--workers_number', nargs='?', help='maximum number of profiles', type=int)
-    parser.add_argument('--yolo_nn_name', nargs='?', help='profile path for autotuning')
+    parser.add_argument('--yolo_nn_name', nargs='?', help='yolo neural network name')
     parser.add_argument('--settings', nargs='?', help='settings json file')
     parser.add_argument('--xml_output', help='show video', action='store_true')
     parser.add_argument('--conf', nargs='?', help='confidence threshold')

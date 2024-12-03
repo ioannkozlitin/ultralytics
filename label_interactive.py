@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 from annotation import Annotation
+from ultralytics import YOLO
 from ultralytics.utils.plotting import Annotator, colors
 from ultralytics.utils.ops import xyxy2xywhn
 from pathlib import Path
@@ -12,7 +13,12 @@ from tkinter import ttk
 from PIL import Image, ImageTk
 
 class Core:
-    def __init__(self, video_name):
+    def __init__(self, video_name, yolo_nn_name):
+        #
+        self.model = YOLO(yolo_nn_name)
+        self.conf = 0.01
+        self.iou = 0.1
+        #
         self.root = Tk()
         self.cap = cv2.VideoCapture(video_name)
         width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -50,6 +56,14 @@ class Core:
         ret, frame = self.cap.read()
         if ret:
             self.frame_number = int(self.cap.get(cv2.CAP_PROP_POS_FRAMES))
+            #
+            annotator = Annotator(frame, line_width=3)
+            results = self.model.predict(source=frame, show=False, conf=self.conf, iou=self.iou, verbose=False)
+            for result in results:
+                boxes_xyxy = result.boxes.xyxy.cpu()
+                for box in boxes_xyxy:
+                    annotator.box_label(box, color=(255,0,0))
+            #
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR) 
             self.image = ImageTk.PhotoImage(Image.fromarray(frame))
             self.canvas.create_image(1, 1, anchor=NW, image=self.image)
@@ -85,7 +99,8 @@ class Core:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('video_name', nargs=1, help='video file name')
+    parser.add_argument('--yolo_nn_name', nargs='?', help='yolo neural network name')
     opt = parser.parse_args()
 
     video_name = str(Path(os.path.expanduser(opt.video_name[0])))
-    Core(video_name)
+    Core(video_name, opt.yolo_nn_name)
